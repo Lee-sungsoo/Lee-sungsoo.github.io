@@ -80,9 +80,22 @@ elif grep -q '<section id="cv">' "$index"; then
   fail "_data/cv.yml has no sections, so the CV section should be hidden"
 fi
 
+# Same for patents: scripts/notion_sync.py writes _data/patents.yml as a list, and
+# about.md renders the section only when that list is non-empty.
+if grep -qE '^- ' "$repo_root/_data/patents.yml"; then
+  grep -q '<section id="patents">' "$index" || fail "_data/patents.yml has entries but the home page has no <section id=\"patents\">"
+elif grep -q '<section id="patents">' "$index"; then
+  fail "_data/patents.yml is empty, so the patents section should be hidden"
+fi
+
 grep -q "LG Electronics" "$index" || fail "the project list is missing from the home page"
 grep -q 'class="project-status' "$index" || fail "the project rows carry no status pill"
 grep -q 'class="bibliography"' "$index" || fail "the bibliography is missing from the home page"
+grep -q 'class="pub-row"' "$index" || fail "the publication rows are missing from the home page"
+grep -q 'class="pub-type"' "$index" || fail "the publication rows carry no type pill"
+if grep -q '<h2 class="bibliography">' "$index"; then
+  fail "the bibliography still renders year headings; scholar.group_by should be none"
+fi
 
 # Nothing but the theme toggle is left up there: no About entry, no `nav: true`
 # pages, and `search_enabled: false`, so no element carries the nav-link class.

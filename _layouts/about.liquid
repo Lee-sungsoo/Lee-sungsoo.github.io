@@ -169,54 +169,22 @@ layout: default
     border-bottom: 1px solid var(--global-divider-color);
   }
 
-  /* Publications: jekyll-scholar output through al-folio's bib template. The
-     year headings become small muted labels instead of right-aligned rules. */
-  .home-main .publications {
-    margin-top: 0;
-  }
-
-  .home-main .publications h2.bibliography {
-    text-align: left;
-    border: 0;
-    padding: 0;
-    margin: 1.5rem 0 0.6rem;
-    font-size: 0.78rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--global-text-color-light);
-  }
-
-  .home-main .publications h2.bibliography:first-child {
-    margin-top: 0;
-  }
-
-  .home-main .publications ol.bibliography li {
-    margin-bottom: 1.4rem;
-  }
-
-  .home-main .publications ol.bibliography li .abbr abbr {
-    font-size: 0.7rem;
-    font-weight: 600;
-    padding: 0.25rem 0.5rem;
-  }
-
-  .home-main .publications ol.bibliography li .title {
-    font-weight: 600;
-  }
-
-  .home-main .publications ol.bibliography li .author,
-  .home-main .publications ol.bibliography li .periodical {
-    font-size: 0.92rem;
-  }
-
-  /* Projects: title left, status pill right, client · period · role beneath. */
+  /* Publications, patents and projects share one row design: title on the left, a
+     small pill on the right, muted detail lines beneath, rules between rows. */
+  .home-main .publications ol.bibliography,
+  .patent-list,
   .project-list {
     list-style: none;
     margin: 0;
     padding: 0;
   }
 
+  .home-main .publications ol.bibliography li {
+    margin: 0;
+    padding: 0;
+  }
+
+  .pub-row,
   .project-list li {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -226,14 +194,18 @@ layout: default
     border-bottom: 1px solid var(--global-divider-color);
   }
 
+  .home-main .publications ol.bibliography li:last-child .pub-row,
+  .patent-list li:last-child,
   .project-list li:last-child {
     border-bottom: 0;
   }
 
+  .pub-title,
   .project-title {
     font-weight: 500;
   }
 
+  .pub-type,
   .project-status {
     margin-top: 0.15rem;
     white-space: nowrap;
@@ -247,29 +219,45 @@ layout: default
     color: var(--global-text-color-light);
   }
 
+  .pub-type.granted,
   .project-status.ongoing {
     color: var(--global-theme-color);
     border-color: var(--global-theme-color);
   }
 
+  .pub-authors {
+    grid-column: 1 / -1;
+    font-size: 0.9rem;
+  }
+
+  .pub-self {
+    font-weight: 600;
+  }
+
+  .pub-meta,
   .project-meta {
     grid-column: 1 / -1;
     font-size: 0.85rem;
     color: var(--global-text-color-light);
   }
+
+  .pub-meta a {
+    color: var(--global-text-color-light);
+    text-decoration: underline;
+    text-decoration-color: var(--global-divider-color);
+    text-underline-offset: 0.15em;
+  }
+
+  .pub-meta a:hover {
+    color: var(--global-theme-color);
+    text-decoration-color: var(--global-theme-color);
+  }
+
   /* The navbar (see _includes/header.liquid) holds only the theme toggle:
      keep it at the right edge at every width. One class more specific than
      the theme's mobile rule, which resets the list to full width. */
   .navbar .container .navbar-menu-list {
     width: auto;
     margin-left: auto;
-  }
-
-  /* Narrow screens: venue badges shrink to their text. The theme's `w-100`
-     sets width inside a cascade layer with !important, so cap max-width instead. */
-  @media (max-width: 575.98px) {
-    .home-main .publications ol.bibliography li .abbr abbr.w-100 {
-      max-width: max-content;
-    }
   }
 </style>

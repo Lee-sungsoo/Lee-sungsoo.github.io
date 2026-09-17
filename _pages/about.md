@@ -19,6 +19,13 @@ profile:
   </div>
 </section>
 
+{% if site.data.patents and site.data.patents != empty %}
+<section id="patents">
+  <h2>Patents</h2>
+  {% include patent_list.liquid %}
+</section>
+{% endif %}
+
 <section id="projects">
   <h2>Projects</h2>
   {% include project_list.liquid %}

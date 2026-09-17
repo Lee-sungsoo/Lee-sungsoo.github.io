@@ -1,0 +1,55 @@
+{% comment %}
+  Local override of al_folio_core's _layouts/bib.liquid. jekyll-scholar renders
+  every entry of {% bibliography %} through this template and wraps it in <li>.
+  Publications are laid out like the project rows: title, a type pill on the
+  right (the `pubtype` field that scripts/notion_sync.py writes), the authors
+  with the site owner in bold, then venue, year and links in one muted line.
+  Styles live in _layouts/about.liquid.
+{% endcomment %}
+{%- capture authors -%}
+  {%- for author in entry.author_array -%}
+    {%- assign is_self = false -%}
+    {%- if site.scholar.last_name contains author.last and site.scholar.first_name contains author.first -%}
+      {%- assign is_self = true -%}
+    {%- endif -%}
+    {%- if is_self -%}
+      <span class="pub-self">{{ author.first }} {{ author.last }}</span>
+    {%- else -%}
+      {{ author.first }} {{ author.last }}
+    {%- endif -%}
+    {%- assign remaining = forloop.length | minus: forloop.index -%}
+    {%- if remaining > 1 -%}
+      {{ ", " }}
+    {%- elsif remaining == 1 -%}
+      {%- if forloop.length > 2 -%}{{ "," }}{%- endif -%}
+      {{ " and " }}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endcapture -%}
+{%- capture venue -%}
+  {%- if entry.type == 'article' -%}
+    {{ entry.journal }}
+  {%- elsif entry.booktitle -%}
+    {{ entry.booktitle }}
+  {%- endif -%}
+{%- endcapture -%}
+<div class="pub-row">
+  <div class="pub-title">{{ entry.title }}</div>
+  {% if entry.pubtype %}
+    <span class="pub-type">{{ entry.pubtype }}</span>
+  {% endif %}
+  {% if authors != "" %}
+    <div class="pub-authors">{{ authors }}</div>
+  {% endif %}
+  <div class="pub-meta">
+    {%- if venue != "" -%}<em>{{ venue }}</em>{%- endif -%}
+    {%- if venue != "" and entry.year -%}{{ ", " }}{%- endif -%}
+    {%- if entry.year -%}{{ entry.year }}{%- endif -%}
+    {%- if entry.doi -%}
+      {{ " · " }}<a href="https://doi.org/{{ entry.doi }}" target="_blank" rel="noopener noreferrer">DOI</a>
+    {%- endif -%}
+    {%- if entry.html -%}
+      {{ " · " }}<a href="{{ entry.html }}" target="_blank" rel="noopener noreferrer">Link</a>
+    {%- endif -%}
+  </div>
+</div>

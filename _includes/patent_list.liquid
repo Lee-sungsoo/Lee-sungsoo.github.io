@@ -1,0 +1,43 @@
+{% comment %}
+  Patent rows for the single-page home, in the same row design as the
+  publications: title, a status pill (Filed / Granted) on the right, the
+  inventors, then country, numbers, dates and applicant in one muted line.
+  Data comes from _data/patents.yml, written by scripts/notion_sync.py from the
+  Notion Patents database. Styles live in _layouts/about.liquid.
+{% endcomment %}
+<ul class="patent-list">
+  {% for patent in site.data.patents %}
+    <li class="pub-row">
+      <div class="pub-title">{{ patent.title }}</div>
+      {% if patent.status %}
+        <span class="pub-type {{ patent.status | downcase }}">{{ patent.status }}</span>
+      {% endif %}
+      {% if patent.inventors %}
+        <div class="pub-authors">{{ patent.inventors }}</div>
+      {% endif %}
+      {% assign meta_parts = "" | split: "" %}
+      {% if patent.application_number %}
+        {% capture application %}{{ patent.country }} {{ patent.application_number }}{% endcapture %}
+        {% assign meta_parts = meta_parts | push: application %}
+      {% elsif patent.country %}
+        {% assign meta_parts = meta_parts | push: patent.country %}
+      {% endif %}
+      {% if patent.filed %}
+        {% capture filed %}Filed {{ patent.filed | date: "%Y.%m.%d" }}{% endcapture %}
+        {% assign meta_parts = meta_parts | push: filed %}
+      {% endif %}
+      {% if patent.registered or patent.registration_number %}
+        {% capture granted -%}
+          Granted{% if patent.registered %} {{ patent.registered | date: "%Y.%m.%d" }}{% endif %}{% if patent.registration_number %}, No. {{ patent.registration_number }}{% endif %}
+        {%- endcapture %}
+        {% assign meta_parts = meta_parts | push: granted %}
+      {% endif %}
+      {% if patent.applicant %}
+        {% assign meta_parts = meta_parts | push: patent.applicant %}
+      {% endif %}
+      {% if meta_parts.size > 0 %}
+        <div class="pub-meta">{{ meta_parts | join: " · " | strip }}</div>
+      {% endif %}
+    </li>
+  {% endfor %}
+</ul>

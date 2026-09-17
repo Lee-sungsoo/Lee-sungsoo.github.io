@@ -1,0 +1,48 @@
+name: Sync from Notion
+
+on:
+  schedule:
+    - cron: "0 21 * * *" # 21:00 UTC = 06:00 KST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+
+      - name: Setup uv 🐍
+        uses: astral-sh/setup-uv@v5
+
+      - name: Sync Notion → site data 🔄
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+        run: uv run --script scripts/notion_sync.py --check
+
+      - name: Commit changes 📝
+        id: commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add _bibliography/papers.bib _data/cv.yml _projects
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "no changes from Notion"
+          else
+            git commit -m "chore: sync site data from Notion"
+            git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # A push made with GITHUB_TOKEN does not trigger the `push` event, so the
+      # deploy workflow has to be started explicitly.
+      - name: Trigger deploy 🚀
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run deploy.yml --ref main

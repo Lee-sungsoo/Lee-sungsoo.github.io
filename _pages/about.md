@@ -11,11 +11,10 @@ profile:
     - Department of Data Science
     - Seoul National University of Science and Technology
   interests:
-    - Technology intelligence
-    - Patent analytics
-    - Embedding inversion
-    - LLM agents
-    - Recommender systems
+    - Technology Intelligence
+    - R&D Intelligence
+    - Recommender Systems
+    - LLM Agents
 ---
 
 <section id="publications">

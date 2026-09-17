@@ -47,6 +47,18 @@ layout: default
 </div>
 
 <style>
+  /* Accent color: blue instead of the theme's purple (light) / cyan (dark).
+     The theme reads both variables for pills, link hovers and the toggle. */
+  :root {
+    --global-theme-color: #0a66c2;
+    --global-hover-color: #0a66c2;
+  }
+
+  html[data-theme="dark"] {
+    --global-theme-color: #58a6ff;
+    --global-hover-color: #58a6ff;
+  }
+
   .home {
     display: grid;
     grid-template-columns: 1fr;

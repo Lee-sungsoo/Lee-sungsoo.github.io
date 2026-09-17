@@ -84,7 +84,7 @@ CV_OWNER_LABEL = (
     "Ph.D. Student, Department of Data Science, "
     "Seoul National University of Science and Technology (SeoulTech)"
 )
-CV_OWNER_EMAIL = "sungsoo207@seoultech.ac.kr"
+CV_OWNER_EMAIL = "sungsoo207@ds.seoultech.ac.kr"
 
 
 # -----------------------------------------------------------------------------

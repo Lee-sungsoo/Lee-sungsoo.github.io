@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Verifies that the site is still the single scrolling home page it is meant to be.
 #
-# Checks the sources (only a home page and a 404 page, no navbar entries, no intro
-# prose on the home page) and the build output (sidebar with photo, name, role and
-# colored social links; Publications and Projects sections; a CV section only when
-# there is CV data; no navbar menu; no separate publications/projects/CV pages).
+# Checks the sources (only a home page and a 404 page, no navbar entries) and the
+# build output (sidebar with photo, name, role and colored social links; About,
+# Publications and Projects sections; Education, Honors and Patents sections only
+# when there is data for them; no navbar menu; no separate publications/projects/CV
+# pages).
 # Run `bundle exec jekyll build` first: the output checks read _site/.
 
 set -euo pipefail
@@ -30,22 +31,11 @@ front_matter() {
   awk 'NR == 1 && $0 == "---" { inside = 1; next } inside && $0 == "---" { exit } inside' "$1"
 }
 
-body() {
-  awk 'NR == 1 && $0 == "---" { inside = 1; next } inside && $0 == "---" { inside = 0; after = 1; next } after' "$1"
-}
-
 for file in "$pages_dir"/*.md; do
   if front_matter "$file" | grep -qE '^nav:[[:space:]]*true'; then
     fail "$(basename "$file") sets nav: true, but the site has no navbar menu"
   fi
 done
-
-# The home page body is sections only: every non-blank line is HTML or Liquid.
-# A line of plain prose would be an intro paragraph creeping back in.
-prose="$(body "$pages_dir/about.md" | grep -vE '^[[:space:]]*$' | grep -vE '^[[:space:]]*(<|\{%)' || true)"
-if [ -n "$prose" ]; then
-  fail "about.md carries prose outside the sections: $(printf '%s' "$prose" | head -1)"
-fi
 
 # --- build output -----------------------------------------------------------
 
@@ -67,30 +57,44 @@ for icon in home-social-email home-social-github home-social-linkedin home-socia
 done
 printf '%s' "$sidebar" | grep -q 'scholar.google.com/citations?user=sy0--vAAAAAJ' || fail "the Google Scholar link points elsewhere"
 printf '%s' "$sidebar" | grep -q 'class="home-interests"' || fail "the sidebar has no research-interest line"
-printf '%s' "$sidebar" | grep -q 'class="home-email" href="mailto:sungsoo207@ds.seoultech.ac.kr">sungsoo207@ds.seoultech.ac.kr</a>' || fail "the sidebar has no plain-text email address"
+if grep -q 'class="home-email"' "$index"; then
+  fail "the plain-text email address is back under the sidebar icons; the mail icon is enough"
+fi
 counts=$(grep -o 'class="home-count">[0-9]*</span>' "$index" | wc -l | tr -d ' ')
 [ "$counts" -ge 2 ] || fail "expected a count next to each section heading, found $counts"
 grep -q 'Last updated: ' "$index" || fail "the footer has no last-updated stamp (last_updated in _config.yml)"
 
-for section in publications projects; do
+for section in about publications projects; do
   grep -q "<section id=\"$section\">" "$index" || fail "no <section id=\"$section\"> on the home page"
 done
 
-# The CV section is data-driven: scripts/notion_sync.py only writes `sections` into
-# _data/cv.yml when the Notion CV Entries database has public rows, and about.md
-# hides the section when there are none.
-if grep -qE '^  sections:' "$repo_root/_data/cv.yml"; then
-  grep -q '<section id="cv">' "$index" || fail "_data/cv.yml has sections but the home page has no <section id=\"cv\">"
-elif grep -q '<section id="cv">' "$index"; then
-  fail "_data/cv.yml has no sections, so the CV section should be hidden"
+about="$(sed -n '/<section id="about">/,/<\/section>/p' "$index")"
+printf '%s' "$about" | grep -q '<p' || fail "the about section carries no intro paragraph"
+
+# The intro comes first: it is what a visitor should read before the lists.
+offset_of() {
+  grep -b -o "$1" "$index" | head -1 | cut -d: -f1
+}
+about_at="$(offset_of '<section id="about">' || true)"
+publications_at="$(offset_of '<section id="publications">' || true)"
+if [ -n "$about_at" ] && [ -n "$publications_at" ] && [ "$about_at" -gt "$publications_at" ]; then
+  fail "the about section comes after the publications section"
 fi
 
-# Same for patents: scripts/notion_sync.py writes _data/patents.yml as a list, and
-# about.md renders the section only when that list is non-empty.
-if grep -qE '^- ' "$repo_root/_data/patents.yml"; then
-  grep -q '<section id="patents">' "$index" || fail "_data/patents.yml has entries but the home page has no <section id=\"patents\">"
-elif grep -q '<section id="patents">' "$index"; then
-  fail "_data/patents.yml is empty, so the patents section should be hidden"
+# Education, honors and patents are data-driven: scripts/notion_sync.py writes each
+# _data file as a list, and about.md renders the section only when its list is
+# non-empty.
+for section in education honors patents; do
+  data="$repo_root/_data/$section.yml"
+  if grep -qE '^- ' "$data"; then
+    grep -q "<section id=\"$section\">" "$index" || fail "_data/$section.yml has entries but the home page has no <section id=\"$section\">"
+  elif grep -q "<section id=\"$section\">" "$index"; then
+    fail "_data/$section.yml is empty, so the $section section should be hidden"
+  fi
+done
+
+if grep -q '<section id="education">' "$index"; then
+  grep -q 'class="pub-when"' "$index" || fail "the education rows carry no period"
 fi
 
 grep -q "LG Electronics" "$index" || fail "the project list is missing from the home page"
@@ -116,7 +120,7 @@ for page in publications projects cv repositories; do
 done
 
 if [ "$status" -eq 0 ]; then
-  echo "check_site: sidebar home page with publications, projects and CV, no navbar menu"
+  echo "check_site: sidebar home page with about, publications and projects, no navbar menu"
 fi
 
 exit "$status"

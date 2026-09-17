@@ -6,19 +6,39 @@
   with the site owner in bold, then venue, year and links in one muted line.
   Styles live in _layouts/about.liquid.
 {% endcomment %}
+{%- comment -%}
+  Korean names reach BibTeX as one token (no given name). Such author lists are
+  joined with commas only, and the owner is matched on the surname list alone.
+{%- endcomment -%}
+{%- assign single_token_names = false -%}
+{%- for author in entry.author_array -%}
+  {%- assign first = author.first | default: "" -%}
+  {%- if first == "" -%}{%- assign single_token_names = true -%}{%- endif -%}
+{%- endfor -%}
 {%- capture authors -%}
   {%- for author in entry.author_array -%}
+    {%- assign first = author.first | default: "" -%}
     {%- assign is_self = false -%}
-    {%- if site.scholar.last_name contains author.last and site.scholar.first_name contains author.first -%}
-      {%- assign is_self = true -%}
+    {%- if first == "" -%}
+      {%- assign name = author.last -%}
+      {%- if site.scholar.last_name contains author.last -%}
+        {%- assign is_self = true -%}
+      {%- endif -%}
+    {%- else -%}
+      {%- capture name -%}{{ first }} {{ author.last }}{%- endcapture -%}
+      {%- if site.scholar.last_name contains author.last and site.scholar.first_name contains first -%}
+        {%- assign is_self = true -%}
+      {%- endif -%}
     {%- endif -%}
     {%- if is_self -%}
-      <span class="pub-self">{{ author.first }} {{ author.last }}</span>
+      <span class="pub-self">{{ name }}</span>
     {%- else -%}
-      {{ author.first }} {{ author.last }}
+      {{ name }}
     {%- endif -%}
     {%- assign remaining = forloop.length | minus: forloop.index -%}
-    {%- if remaining > 1 -%}
+    {%- if remaining > 0 and single_token_names -%}
+      {{ ", " }}
+    {%- elsif remaining > 1 -%}
       {{ ", " }}
     {%- elsif remaining == 1 -%}
       {%- if forloop.length > 2 -%}{{ "," }}{%- endif -%}

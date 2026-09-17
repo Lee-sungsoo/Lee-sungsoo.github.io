@@ -29,7 +29,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add _bibliography/papers.bib _data/cv.yml _projects
+          git add _bibliography/papers.bib _projects _data/education.yml _data/honors.yml _data/patents.yml
           if git diff --cached --quiet; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "no changes from Notion"

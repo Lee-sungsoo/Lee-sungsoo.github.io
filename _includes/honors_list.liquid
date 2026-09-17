@@ -1,0 +1,20 @@
+{% comment %}
+  Honors and awards rows for the single-page home, in the same row design as the
+  education list: the award on the left, its date on the right, the awarding
+  organization in one muted line under them. Data comes from _data/honors.yml,
+  written by scripts/notion_sync.py from the Notion CV Entries database. Styles
+  live in _layouts/about.liquid.
+{% endcomment %}
+<ul class="honors-list">
+  {% for entry in site.data.honors %}
+    <li class="pub-row">
+      <div class="pub-title">{{ entry.title }}</div>
+      {% if entry.date %}
+        <span class="pub-when">{{ entry.date }}</span>
+      {% endif %}
+      {% if entry.organization %}
+        <div class="pub-meta">{{ entry.organization }}</div>
+      {% endif %}
+    </li>
+  {% endfor %}
+</ul>

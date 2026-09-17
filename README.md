@@ -14,7 +14,9 @@ Generated files, do not edit by hand:
 
 - `_bibliography/papers.bib`
 - `_projects/*.md`
-- `_data/cv.yml`
+- `_data/education.yml`
+- `_data/honors.yml`
+- `_data/patents.yml`
 
 ## Sync
 

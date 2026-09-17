@@ -346,7 +346,7 @@ display_categories: ["external-services"] # these categories will be displayed o
 # -----------------------------------------------------------------------------
 
 scholar:
-  last_name: [Lee]
+  last_name: [Lee, 이성수]
   first_name: [Sungsoo, S.]
 
   style: apa

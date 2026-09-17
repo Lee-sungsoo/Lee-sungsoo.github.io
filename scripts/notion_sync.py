@@ -6,11 +6,12 @@
 """Syncs Notion databases into the al-folio data files of this site.
 
 Reads four Notion databases (Research, Projects, CV Entries, Patents) through the
-REST API and regenerates four site artifacts:
+REST API and regenerates five site artifacts:
 
   * ``_bibliography/papers.bib``  -- publications rendered by jekyll-scholar
   * ``_projects/*.md``            -- project cards (generated files only)
-  * ``_data/cv.yml``              -- RenderCV-format CV data
+  * ``_data/education.yml``       -- education list for the home page
+  * ``_data/honors.yml``          -- honors and awards list for the home page
   * ``_data/patents.yml``         -- patent list for the home page
 
 Notion is read-only here. Only rows with the ``공개`` checkbox set are exported,
@@ -48,7 +49,8 @@ PATENTS_DB = "3b632e6de3498179bda0f56414ac7afe"
 REPO_ROOT = Path(__file__).resolve().parent.parent
 BIB_PATH = REPO_ROOT / "_bibliography" / "papers.bib"
 PROJECTS_DIR = REPO_ROOT / "_projects"
-CV_PATH = REPO_ROOT / "_data" / "cv.yml"
+EDUCATION_PATH = REPO_ROOT / "_data" / "education.yml"
+HONORS_PATH = REPO_ROOT / "_data" / "honors.yml"
 PATENTS_PATH = REPO_ROOT / "_data" / "patents.yml"
 
 # Marks files this script owns, so a rerun can clear them without touching
@@ -78,13 +80,6 @@ PROJECT_CATEGORIES = {
 }
 DEFAULT_PROJECT_CATEGORY = "project"
 RESEARCH_PROJECT_CATEGORY = "research"
-
-CV_OWNER_NAME = "Sungsoo Lee"
-CV_OWNER_LABEL = (
-    "Ph.D. Student, Department of Data Science, "
-    "Seoul National University of Science and Technology (SeoulTech)"
-)
-CV_OWNER_EMAIL = "sungsoo207@ds.seoultech.ac.kr"
 
 
 # -----------------------------------------------------------------------------
@@ -248,6 +243,21 @@ def format_year_month(iso_date: str) -> str:
     return parts[0]
 
 
+def format_period(start: str, end: str, ongoing: bool) -> str:
+    """Builds `YYYY.MM – YYYY.MM`; empty when there is no start date.
+
+    An `ongoing` entry without an end date reads `YYYY.MM – present`.
+    """
+    if not start:
+        return ""
+    period = format_year_month(start)
+    if end:
+        return f"{period} – {format_year_month(end)}"
+    if ongoing:
+        return f"{period} – present"
+    return period
+
+
 # -----------------------------------------------------------------------------
 # papers.bib
 # -----------------------------------------------------------------------------
@@ -335,18 +345,8 @@ def build_bibliography(research_rows: list[dict[str, Any]]) -> tuple[str, int]:
 
 
 def project_period(status: str, start: str, end: str) -> str:
-    """Builds `YYYY.MM – YYYY.MM`; empty when there is no start date.
-
-    An Ongoing project without an end date reads `YYYY.MM – present`.
-    """
-    if not start:
-        return ""
-    period = format_year_month(start)
-    if end:
-        return f"{period} – {format_year_month(end)}"
-    if status == "Ongoing":
-        return f"{period} – present"
-    return period
+    """Builds a project period; an Ongoing project runs up to `present`."""
+    return format_period(start, end, ongoing=status == "Ongoing")
 
 
 def project_description(status: str, institution: str, start: str, end: str) -> str:
@@ -467,97 +467,53 @@ def write_projects(files: list[tuple[str, str]]) -> None:
 
 
 # -----------------------------------------------------------------------------
-# _data/cv.yml
+# _data/education.yml and _data/honors.yml
 # -----------------------------------------------------------------------------
 
 
-def build_cv(cv_rows: list[dict[str, Any]]) -> dict[str, Any]:
-    """Builds the RenderCV-format CV data consumed by the al_folio_cv plugin.
-
-    Patents are not part of it: they have their own section on the home page,
-    fed by ``_data/patents.yml`` (see :func:`build_patents`).
-    """
-    sections: dict[str, list[dict[str, Any]]] = {}
-
-    def by_recency(row: dict[str, Any], title_field: str) -> tuple[str, str]:
-        start, _ = date_of(row, "기간")
-        # Sorting on the negated ISO string is awkward, so reverse later instead.
-        return (start or "", text_of(row, title_field))
-
-    def dated_rows(kind: str) -> list[dict[str, Any]]:
-        rows = [row for row in cv_rows if select_of(row, "구분") == kind]
-        return sorted(rows, key=lambda row: by_recency(row, "내용"), reverse=True)
-
-    education: list[dict[str, Any]] = []
-    for row in dated_rows("Education"):
-        start, end = date_of(row, "기간")
-        entry: dict[str, Any] = {"studyType": text_of(row, "내용")}
-        if text_of(row, "기관"):
-            entry["institution"] = text_of(row, "기관")
-        if start:
-            entry["start_date"] = start
-        if end:
-            entry["end_date"] = end
-        if text_of(row, "비고"):
-            entry["highlights"] = [text_of(row, "비고")]
-        education.append(entry)
-    if education:
-        sections["Education"] = education
-
-    experience: list[dict[str, Any]] = []
-    for row in dated_rows("Experience"):
-        start, end = date_of(row, "기간")
-        entry = {"position": text_of(row, "내용")}
-        if text_of(row, "기관"):
-            entry["company"] = text_of(row, "기관")
-        if start:
-            entry["start_date"] = start
-        if end:
-            entry["end_date"] = end
-        if text_of(row, "비고"):
-            entry["highlights"] = [text_of(row, "비고")]
-        experience.append(entry)
-    if experience:
-        sections["Experience"] = experience
-
-    awards: list[dict[str, Any]] = []
-    for row in dated_rows("Award"):
-        start, _ = date_of(row, "기간")
-        entry = {"title": text_of(row, "내용")}
-        if start:
-            entry["date"] = start
-        if text_of(row, "기관"):
-            entry["awarder"] = text_of(row, "기관")
-        if text_of(row, "비고"):
-            entry["summary"] = text_of(row, "비고")
-        awards.append(entry)
-    if awards:
-        sections["Honors and Awards"] = awards
-
-    skills: list[dict[str, Any]] = []
-    skill_rows = sorted(
-        (row for row in cv_rows if select_of(row, "구분") == "Skill"),
-        key=lambda row: text_of(row, "내용"),
+def cv_rows_of(cv_rows: list[dict[str, Any]], kind: str) -> list[dict[str, Any]]:
+    """Returns the CV rows of one 구분, most recently started first."""
+    rows = [row for row in cv_rows if select_of(row, "구분") == kind]
+    return sorted(
+        rows,
+        key=lambda row: (date_of(row, "기간")[0], text_of(row, "내용")),
+        reverse=True,
     )
-    for row in skill_rows:
-        entry = {"name": text_of(row, "내용")}
-        keywords = [
-            part.strip() for part in text_of(row, "비고").split(",") if part.strip()
-        ]
-        if keywords:
-            entry["keywords"] = keywords
-        skills.append(entry)
-    if skills:
-        sections["Skills"] = skills
 
-    cv: dict[str, Any] = {
-        "name": CV_OWNER_NAME,
-        "label": CV_OWNER_LABEL,
-        "email": CV_OWNER_EMAIL,
-    }
-    if sections:
-        cv["sections"] = sections
-    return {"cv": cv}
+
+def build_education(cv_rows: list[dict[str, Any]]) -> list[dict[str, str]]:
+    """Builds the education list rendered by _includes/education_list.liquid.
+
+    One mapping per degree, most recent first; empty fields are left out. The
+    ``비고`` column is private (it holds student ids) and is never exported.
+    """
+    education: list[dict[str, str]] = []
+    for row in cv_rows_of(cv_rows, "Education"):
+        start, end = date_of(row, "기간")
+        fields = {
+            "degree": text_of(row, "내용"),
+            "institution": text_of(row, "기관"),
+            "period": format_period(start, end, ongoing=True),
+        }
+        education.append({key: value for key, value in fields.items() if value})
+    return education
+
+
+def build_honors(cv_rows: list[dict[str, Any]]) -> list[dict[str, str]]:
+    """Builds the honors list rendered by _includes/honors_list.liquid.
+
+    One mapping per award, most recent first; empty fields are left out. As for
+    the education list, the private ``비고`` column stays in Notion.
+    """
+    honors: list[dict[str, str]] = []
+    for row in cv_rows_of(cv_rows, "Award"):
+        fields = {
+            "title": text_of(row, "내용"),
+            "organization": text_of(row, "기관"),
+            "date": format_year_month(date_of(row, "기간")[0]),
+        }
+        honors.append({key: value for key, value in fields.items() if value})
+    return honors
 
 
 # -----------------------------------------------------------------------------
@@ -620,12 +576,12 @@ def sync(include_private: bool) -> dict[str, int]:
     project_files = build_projects(projects, research)
     write_projects(project_files)
 
-    cv_data = build_cv(cv_entries)
-    CV_PATH.parent.mkdir(parents=True, exist_ok=True)
-    CV_PATH.write_text(
-        dump_yaml(cv_data),
-        encoding="utf-8",
-    )
+    education = build_education(cv_entries)
+    EDUCATION_PATH.parent.mkdir(parents=True, exist_ok=True)
+    EDUCATION_PATH.write_text(dump_yaml(education), encoding="utf-8")
+
+    honors = build_honors(cv_entries)
+    HONORS_PATH.write_text(dump_yaml(honors), encoding="utf-8")
 
     patent_list = build_patents(patents)
     PATENTS_PATH.write_text(dump_yaml(patent_list), encoding="utf-8")
@@ -634,7 +590,8 @@ def sync(include_private: bool) -> dict[str, int]:
         "publications": bib_count,
         "projects": len(project_files),
         "patents": len(patent_list),
-        "cv_sections": len(cv_data["cv"].get("sections", {})),
+        "education": len(education),
+        "honors": len(honors),
     }
 
 
@@ -651,19 +608,21 @@ def check() -> list[str]:
             problems.append("papers.bib does not end with a newline")
         print(f"  papers.bib: {len(entries)} entries")
 
-    if not CV_PATH.exists():
-        problems.append(f"missing {CV_PATH.relative_to(REPO_ROOT)}")
-    else:
+    for path, required in ((EDUCATION_PATH, "degree"), (HONORS_PATH, "title")):
+        if not path.exists():
+            problems.append(f"missing {path.relative_to(REPO_ROOT)}")
+            continue
         try:
-            data = yaml.safe_load(CV_PATH.read_text(encoding="utf-8"))
+            entries = yaml.safe_load(path.read_text(encoding="utf-8"))
         except yaml.YAMLError as error:
-            problems.append(f"cv.yml does not parse: {error}")
+            problems.append(f"{path.name} does not parse: {error}")
+            continue
+        if not isinstance(entries, list):
+            problems.append(f"{path.name} is not a list")
+        elif any(required not in entry for entry in entries):
+            problems.append(f"{path.name} has an entry without a {required}")
         else:
-            if not isinstance(data, dict) or "cv" not in data:
-                problems.append("cv.yml has no top-level 'cv' key")
-            else:
-                names = list(data["cv"].get("sections", {}))
-                print(f"  cv.yml: {len(names)} sections {names}")
+            print(f"  {path.name}: {len(entries)} entries")
 
     if not PATENTS_PATH.exists():
         problems.append(f"missing {PATENTS_PATH.relative_to(REPO_ROOT)}")
@@ -723,7 +682,7 @@ def main() -> int:
     print(
         f"synced {scope}: {counts['publications']} publications, "
         f"{counts['projects']} projects, {counts['patents']} patents, "
-        f"{counts['cv_sections']} CV sections"
+        f"{counts['education']} education, {counts['honors']} honors"
     )
 
     if not args.check:

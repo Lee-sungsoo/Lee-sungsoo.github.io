@@ -43,9 +43,6 @@ layout: default
         <a class="home-social-scholar" href="https://scholar.google.com/citations?user={{ socials.scholar_userid }}" title="Google Scholar" aria-label="Google Scholar" target="_blank" rel="noopener noreferrer"><i class="ai ai-google-scholar"></i></a>
       {% endif %}
     </div>
-    {% if socials.email %}
-      <a class="home-email" href="mailto:{{ socials.email }}">{{ socials.email }}</a>
-    {% endif %}
   </aside>
   <div class="home-main">
     {{ content }}
@@ -127,20 +124,6 @@ layout: default
   .home-interests span:not(:last-child)::after {
     content: "\00a0\00b7";
     margin-right: 0.4em;
-  }
-
-  /* Plain-text address under the icons, for visitors without a mail client. */
-  .home-email {
-    display: block;
-    margin-top: 0.8rem;
-    font-size: 0.8rem;
-    color: var(--global-text-color-light);
-    text-decoration: none;
-  }
-
-  .home-email:hover {
-    color: var(--global-theme-color);
-    text-decoration: none;
   }
 
   .home-social {
@@ -226,9 +209,18 @@ layout: default
     color: var(--global-text-color-light);
   }
 
-  /* Publications, patents and projects share one row design: title on the left, a
-     small pill on the right, muted detail lines beneath, rules between rows. */
+  .home-main #about p {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.7;
+  }
+
+  /* Education, honors, publications, patents and projects share one row design:
+     title on the left, a small pill or date on the right, muted detail lines
+     beneath, rules between rows. */
   .home-main .publications ol.bibliography,
+  .education-list,
+  .honors-list,
   .patent-list,
   .project-list {
     list-style: none;
@@ -252,6 +244,8 @@ layout: default
   }
 
   .home-main .publications ol.bibliography li:last-child .pub-row,
+  .education-list li:last-child,
+  .honors-list li:last-child,
   .patent-list li:last-child,
   .project-list li:last-child {
     border-bottom: 0;
@@ -280,6 +274,14 @@ layout: default
   .project-status.ongoing {
     color: var(--global-theme-color);
     border-color: var(--global-theme-color);
+  }
+
+  /* Education and honors carry a plain date in the right column, not a pill. */
+  .pub-when {
+    white-space: nowrap;
+    margin-top: 0.15rem;
+    font-size: 0.85rem;
+    color: var(--global-text-color-light);
   }
 
   .pub-authors {

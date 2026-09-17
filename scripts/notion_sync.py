@@ -336,6 +336,13 @@ def project_description(institution: str, start: str, end: str) -> str:
     return f"{institution} · {period}"
 
 
+def cowork_description(row: dict[str, Any]) -> str:
+    """Builds `venue · year` for Co-work research cards; skips empty parts."""
+    year = number_of(row, "연도")
+    parts = (text_of(row, "게재처"), str(int(year)) if year is not None else "")
+    return " · ".join(part for part in parts if part)
+
+
 def build_projects(
     project_rows: list[dict[str, Any]], research_rows: list[dict[str, Any]]
 ) -> list[tuple[str, str]]:
@@ -383,7 +390,7 @@ def build_projects(
             {
                 "row": row,
                 "title": english_title(row, "제목"),
-                "description": "",
+                "description": cowork_description(row),
                 "importance": None,
                 "category": RESEARCH_PROJECT_CATEGORY,
             }
@@ -502,7 +509,7 @@ def build_cv(
         )
         tail = ", ".join(part for part in (head, select_of(row, "상태")) if part)
         title = text_of(row, "발명의 명칭")
-        patents.append({"bullet": f"{title} — {tail}" if tail else title})
+        patents.append({"bullet": f"{title} ({tail})" if tail else title})
     if patents:
         sections["Patents"] = patents
 

@@ -5,7 +5,6 @@ permalink: /projects/
 description: Research and industry projects. Generated from Notion.
 nav: true
 nav_order: 3
-display_categories: [research, funded, industry, personal, project]
 horizontal: false
 ---
 

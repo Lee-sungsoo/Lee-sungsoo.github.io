@@ -18,7 +18,8 @@ apple_touch_icon: # image name in /assets/img/ (or a rooted path / absolute URL)
 
 url: https://lee-sungsoo.github.io # the base hostname & protocol for your site
 baseurl: "" # the subpath of your site, e.g. /blog/. Leave blank for root
-last_updated: false # set to true if you want to display last updated in the footer
+last_updated: true # set to true if you want to display last updated in the footer
+timezone: Asia/Seoul # the footer date is stamped in KST, not the runner's UTC
 impressum_path: # set to path to include impressum link in the footer, use the same path as permalink in a page, helps to conform with EU GDPR
 back_to_top: true # set to false to disable the back to top button
 
@@ -93,7 +94,7 @@ al_folio:
 # -----------------------------------------------------------------------------
 
 navbar_fixed: true
-footer_fixed: true
+footer_fixed: false
 search_enabled: false # single page: the index only held projects, whose own pages no longer exist
 socials_in_search: true
 posts_in_search: true

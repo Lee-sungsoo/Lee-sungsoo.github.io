@@ -10,10 +10,16 @@ profile:
   affiliation:
     - Department of Data Science
     - Seoul National University of Science and Technology
+  interests:
+    - Technology intelligence
+    - Patent analytics
+    - Embedding inversion
+    - LLM agents
+    - Recommender systems
 ---
 
 <section id="publications">
-  <h2>Publications</h2>
+  <h2>Publications <span class="home-count">{% bibliography_count %}</span></h2>
   <div class="publications">
     {% bibliography %}
   </div>
@@ -21,13 +27,13 @@ profile:
 
 {% if site.data.patents and site.data.patents != empty %}
 <section id="patents">
-  <h2>Patents</h2>
+  <h2>Patents <span class="home-count">{{ site.data.patents | size }}</span></h2>
   {% include patent_list.liquid %}
 </section>
 {% endif %}
 
 <section id="projects">
-  <h2>Projects</h2>
+  <h2>Projects <span class="home-count">{{ site.projects | size }}</span></h2>
   {% include project_list.liquid %}
 </section>
 

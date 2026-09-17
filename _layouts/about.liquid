@@ -26,6 +26,9 @@ layout: default
         {% endfor %}
       </p>
     {% endif %}
+    {% if page.profile.interests %}
+      <p class="home-interests">{% for item in page.profile.interests %}<span>{{ item }}</span>{% endfor %}</p>
+    {% endif %}
     <div class="home-social">
       {% if socials.email %}
         <a class="home-social-email" href="mailto:{{ socials.email }}" title="Email" aria-label="Email"><i class="fa-solid fa-envelope"></i></a>
@@ -40,6 +43,9 @@ layout: default
         <a class="home-social-scholar" href="https://scholar.google.com/citations?user={{ socials.scholar_userid }}" title="Google Scholar" aria-label="Google Scholar" target="_blank" rel="noopener noreferrer"><i class="ai ai-google-scholar"></i></a>
       {% endif %}
     </div>
+    {% if socials.email %}
+      <a class="home-email" href="mailto:{{ socials.email }}">{{ socials.email }}</a>
+    {% endif %}
   </aside>
   <div class="home-main">
     {{ content }}
@@ -99,10 +105,42 @@ layout: default
   }
 
   .home-affil {
-    margin: 0.3rem 0 1.1rem;
+    margin: 0.3rem 0 0;
     font-size: 0.86rem;
     line-height: 1.5;
     color: var(--global-text-color-light);
+  }
+
+  .home-interests {
+    margin: 0.7rem 0 1.1rem;
+    font-size: 0.8rem;
+    line-height: 1.55;
+    color: var(--global-text-color-light);
+  }
+
+  /* Each keyword is an unbreakable unit and carries its own trailing dot, so a
+     wrapped line never starts with one (the build strips whitespace between tags). */
+  .home-interests span {
+    display: inline-block;
+  }
+
+  .home-interests span:not(:last-child)::after {
+    content: "\00a0\00b7";
+    margin-right: 0.4em;
+  }
+
+  /* Plain-text address under the icons, for visitors without a mail client. */
+  .home-email {
+    display: block;
+    margin-top: 0.8rem;
+    font-size: 0.8rem;
+    color: var(--global-text-color-light);
+    text-decoration: none;
+  }
+
+  .home-email:hover {
+    color: var(--global-theme-color);
+    text-decoration: none;
   }
 
   .home-social {
@@ -179,6 +217,13 @@ layout: default
     margin: 0 0 1.1rem;
     padding-bottom: 0.5rem;
     border-bottom: 1px solid var(--global-divider-color);
+  }
+
+  .home-count {
+    margin-left: 0.45rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--global-text-color-light);
   }
 
   /* Publications, patents and projects share one row design: title on the left, a

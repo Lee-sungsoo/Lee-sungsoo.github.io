@@ -66,6 +66,11 @@ for icon in home-social-email home-social-github home-social-linkedin home-socia
   printf '%s' "$sidebar" | grep -q "class=\"$icon\"" || fail "the sidebar has no $icon link"
 done
 printf '%s' "$sidebar" | grep -q 'scholar.google.com/citations?user=sy0--vAAAAAJ' || fail "the Google Scholar link points elsewhere"
+printf '%s' "$sidebar" | grep -q 'class="home-interests"' || fail "the sidebar has no research-interest line"
+printf '%s' "$sidebar" | grep -q 'class="home-email" href="mailto:sungsoo207@ds.seoultech.ac.kr">sungsoo207@ds.seoultech.ac.kr</a>' || fail "the sidebar has no plain-text email address"
+counts=$(grep -o 'class="home-count">[0-9]*</span>' "$index" | wc -l | tr -d ' ')
+[ "$counts" -ge 2 ] || fail "expected a count next to each section heading, found $counts"
+grep -q 'Last updated: ' "$index" || fail "the footer has no last-updated stamp (last_updated in _config.yml)"
 
 for section in publications projects; do
   grep -q "<section id=\"$section\">" "$index" || fail "no <section id=\"$section\"> on the home page"

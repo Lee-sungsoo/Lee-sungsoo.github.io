@@ -27,6 +27,8 @@ My research is on agentic AI for R&D proposal evaluation and project selection, 
 
 Feel free to reach out if any of this overlaps with what you are working on.
 
+<div style="clear: both"></div>
+
 ## Publications {#publications}
 
 <div class="publications">

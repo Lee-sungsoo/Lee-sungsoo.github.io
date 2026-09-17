@@ -44,6 +44,12 @@ layout: default
         {% if page.social %}
           <div class="social">
             <div class="contact-icons">{% social_links %}</div>
+            <style>
+              /* Icons sit in the 30% profile column, so keep them on one line. */
+              .profile .contact-icons {
+                font-size: 2rem;
+              }
+            </style>
 
             <div class="contact-note">{{ site.contact_note }}</div>
           </div>

@@ -1,0 +1,37 @@
+{% comment %}
+  CV sections for the single-page layout. al_folio_cv's cv/render.liquid also emits
+  a page header and a "Contact Information" card, which repeat the top of this page,
+  so only site.data.cv.cv.sections is rendered here; the per-entry templates come
+  from the gem. Entry order is the one scripts/notion_sync.py writes (most recent
+  first). Its stylesheet is linked here because al_folio_core only loads it on pages
+  whose layout is `cv`.
+{% endcomment %}
+<link rel="stylesheet" href="{{ '/assets/css/al-folio-cv.css' | relative_url | bust_file_cache }}">
+<div class="cv">
+  {% for section_pair in site.data.cv.cv.sections %}
+    {% assign section_title = section_pair[0] %}
+    {% assign entries = section_pair[1] %}
+    <div class="card mt-3 p-3">
+      <h3 class="card-title font-weight-medium">{{ section_title }}</h3>
+      <div>
+        {% if section_title == 'Education' %}
+          {% include cv/education.liquid %}
+        {% elsif section_title == 'Experience' %}
+          {% include cv/experience.liquid %}
+        {% elsif section_title == 'Honors and Awards' %}
+          {% include cv/awards.liquid %}
+        {% elsif section_title == 'Skills' %}
+          {% include cv/skills.liquid %}
+        {% else %}
+          <ul class="card-text font-weight-light list-group list-group-flush">
+            {% for entry in entries %}
+              {% if entry.bullet %}
+                <li class="list-group-item">{{ entry.bullet }}</li>
+              {% endif %}
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+    </div>
+  {% endfor %}
+</div>

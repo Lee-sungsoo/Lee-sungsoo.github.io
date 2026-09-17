@@ -1,0 +1,30 @@
+{% comment %}
+  One-line project list for the single-page layout, in place of al_folio_core's
+  card grid (_includes/projects.liquid): the title, with the Notion-generated
+  description (status, role, client, period) under it in small print.
+{% endcomment %}
+{% assign sorted_projects = site.projects | sort: 'importance' %}
+<ul class="project-list">
+  {% for project in sorted_projects %}
+    <li>
+      {{ project.title }}
+      <div class="project-meta">{{ project.description }}</div>
+    </li>
+  {% endfor %}
+</ul>
+
+<style>
+  .project-list {
+    list-style: none;
+    padding-left: 0;
+  }
+
+  .project-list li {
+    margin-bottom: 0.75rem;
+  }
+
+  .project-meta {
+    font-size: 0.875rem;
+    color: var(--global-text-color-light);
+  }
+</style>

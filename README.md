@@ -1,7 +1,8 @@
 # lee-sungsoo.github.io
 
 Personal academic site of Sungsoo Lee: <https://lee-sungsoo.github.io>.
-Built with [al-folio](https://github.com/alshedivat/al-folio) (Jekyll).
+Built with [al-folio](https://github.com/alshedivat/al-folio) (Jekyll). Everything
+lives on one scrolling page (`_pages/about.md`): intro, publications, projects, CV.
 
 ## Content comes from Notion
 
@@ -33,5 +34,5 @@ The token is read from `$NOTION_TOKEN`, falling back to the macOS keychain item
 bundle install
 bundle exec jekyll build      # output in _site/
 bundle exec jekyll serve      # http://localhost:4000
-bash scripts/check_site.sh    # navbar must list exactly 5 pages
+bash scripts/check_site.sh    # single page, no navbar menu (reads _site/, so build first)
 ```

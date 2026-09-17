@@ -1,59 +1,82 @@
 #!/usr/bin/env bash
-# Verifies that the navigation bar lists exactly the five intended pages.
+# Verifies that the site is still the single scrolling page it is meant to be.
 #
-# al-folio renders the About page (the one with `permalink: /`) as a hard-coded
-# first navbar entry, then appends every page with `nav: true`. So the pages
-# actually visible in the navbar are About plus the `nav: true` pages, and the
-# About page must NOT also set `nav: true` or it would be listed twice.
+# Checks the sources (only an About page and a 404 page, no navbar entries, photo
+# on the left) and the build output (the three sections are on the home page, the
+# navbar carries no menu links, and no separate publications/projects/CV pages were
+# written). Run `bundle exec jekyll build` first: the output checks read _site/.
 
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 pages_dir="$repo_root/_pages"
-expected="about cv projects publications repositories"
+index="$repo_root/_site/index.html"
+status=0
+
+fail() {
+  echo "FAIL $1" >&2
+  status=1
+}
+
+# --- sources ----------------------------------------------------------------
+
+pages="$(cd "$pages_dir" && printf '%s\n' *.md | sort | tr '\n' ' ' | sed 's/ *$//')"
+if [ "$pages" != "404.md about.md" ]; then
+  fail "_pages holds '$pages', expected '404.md about.md'"
+fi
 
 front_matter() {
   awk 'NR == 1 && $0 == "---" { inside = 1; next } inside && $0 == "---" { exit } inside' "$1"
 }
 
-field() {
-  printf '%s\n' "$1" | sed -n "s/^$2:[[:space:]]*//p" | head -1 | tr -d "\"'" | tr -d '\r'
-}
-
-status=0
-nav_names=()
-
 for file in "$pages_dir"/*.md; do
-  matter="$(front_matter "$file")"
-  permalink="$(field "$matter" permalink)"
-  nav="$(field "$matter" nav)"
-
-  name="$(printf '%s' "$permalink" | sed 's#^/##; s#/$##')"
-  [ -z "$name" ] && name="about"
-
-  if [ "$permalink" = "/" ]; then
-    if [ "$nav" = "true" ]; then
-      echo "FAIL $(basename "$file"): sets nav: true, but About is already hard-coded in the navbar" >&2
-      status=1
-    fi
-    nav_names+=("$name")
-  elif [ "$nav" = "true" ]; then
-    nav_names+=("$name")
+  if front_matter "$file" | grep -qE '^nav:[[:space:]]*true'; then
+    fail "$(basename "$file") sets nav: true, but the site has no navbar menu"
   fi
 done
 
-actual="$(printf '%s\n' "${nav_names[@]}" | sort | tr '\n' ' ' | sed 's/ *$//')"
-wanted="$(printf '%s\n' $expected | sort | tr '\n' ' ' | sed 's/ *$//')"
-
-if [ "$actual" != "$wanted" ]; then
-  echo "FAIL navbar pages differ" >&2
-  echo "  expected: $wanted" >&2
-  echo "  actual:   $actual" >&2
-  status=1
+if ! front_matter "$pages_dir/about.md" | grep -qE '^[[:space:]]+align:[[:space:]]*left'; then
+  fail "about.md does not set profile.align: left"
 fi
 
+# --- build output -----------------------------------------------------------
+
+if [ ! -f "$index" ]; then
+  fail "_site/index.html is missing; run 'bundle exec jekyll build' first"
+  exit "$status"
+fi
+
+for section in publications projects; do
+  grep -q "<h2 id=\"$section\">" "$index" || fail "no <h2 id=\"$section\"> heading on the home page"
+done
+
+# The CV section is data-driven: scripts/notion_sync.py only writes `sections` into
+# _data/cv.yml when the Notion CV Entries database has public rows, and about.md
+# hides the heading when there are none.
+if grep -qE '^  sections:' "$repo_root/_data/cv.yml"; then
+  grep -q '<h2 id="cv">' "$index" || fail "_data/cv.yml has sections but the home page has no <h2 id=\"cv\"> heading"
+elif grep -q '<h2 id="cv">' "$index"; then
+  fail "_data/cv.yml has no sections, so the CV heading should be hidden"
+fi
+
+grep -q "LG Electronics" "$index" || fail "the project list is missing from the home page"
+grep -q 'class="bibliography"' "$index" || fail "the bibliography is missing from the home page"
+
+# Nothing but the theme toggle is left up there: no About entry, no `nav: true`
+# pages, and `search_enabled: false`, so no element carries the nav-link class.
+nav="$(sed -n '/<nav id="navbar"/,/<\/nav>/p' "$index")"
+if printf '%s' "$nav" | grep -q 'nav-link'; then
+  fail "the navbar still carries nav-link elements"
+fi
+
+for page in publications projects cv repositories; do
+  if [ -e "$repo_root/_site/$page" ]; then
+    fail "_site/$page exists, but everything lives on the single page now"
+  fi
+done
+
 if [ "$status" -eq 0 ]; then
-  echo "check_site: navbar lists exactly 5 pages: $actual"
+  echo "check_site: single page with publications, projects and CV, no navbar menu"
 fi
 
 exit "$status"

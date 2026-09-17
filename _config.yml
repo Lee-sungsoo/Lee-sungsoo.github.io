@@ -94,7 +94,7 @@ al_folio:
 
 navbar_fixed: true
 footer_fixed: true
-search_enabled: true
+search_enabled: false # single page: the index only held projects, whose own pages no longer exist
 socials_in_search: true
 posts_in_search: true
 bib_search: true
@@ -193,7 +193,7 @@ collections:
       layout: post
     output: true
   projects:
-    output: true
+    output: false # listed inline on the single page, so no per-project pages
   teachings:
     output: true
 

@@ -1,6 +1,7 @@
 ---
 layout: page
 title: Development of a Vision AI-based System for Waste Bin Analysis and Monitoring
+description: Completed · RECO · 2025.03 – 2026.08
 importance: 6
 category: industry
 ---

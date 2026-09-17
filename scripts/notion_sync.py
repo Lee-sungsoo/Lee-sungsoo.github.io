@@ -327,8 +327,10 @@ def build_bibliography(research_rows: list[dict[str, Any]]) -> tuple[str, int]:
 # -----------------------------------------------------------------------------
 
 
-def project_description(status: str, institution: str, start: str, end: str) -> str:
-    """Builds `Status · institution · YYYY.MM – YYYY.MM`; empty parts are skipped.
+def project_description(
+    status: str, role: str, institution: str, start: str, end: str
+) -> str:
+    """Builds `Status · Role · institution · YYYY.MM – YYYY.MM`; empty parts are skipped.
 
     An Ongoing project without an end date reads `YYYY.MM – present`.
     """
@@ -339,7 +341,7 @@ def project_description(status: str, institution: str, start: str, end: str) -> 
             period = f"{period} – {format_year_month(end)}"
         elif status == "Ongoing":
             period = f"{period} – present"
-    return " · ".join(part for part in (status, institution, period) if part)
+    return " · ".join(part for part in (status, role, institution, period) if part)
 
 
 def cowork_description(row: dict[str, Any]) -> str:
@@ -375,7 +377,11 @@ def build_projects(
                 "row": row,
                 "title": text_of(row, "프로젝트명"),
                 "description": project_description(
-                    select_of(row, "상태"), text_of(row, "기관·발주처"), start, end
+                    select_of(row, "상태"),
+                    select_of(row, "참여 형태"),
+                    text_of(row, "기관·발주처"),
+                    start,
+                    end,
                 ),
                 "importance": number_of(row, "중요도"),
                 "category": PROJECT_CATEGORIES.get(

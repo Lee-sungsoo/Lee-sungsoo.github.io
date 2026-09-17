@@ -2,6 +2,9 @@
 layout: page
 title: 'Lab-specialized Startup Leading University Program: Innovation Startup Lab'
 description: Ongoing · Commercializations Promotion Agency for R&D Outcomes (COMPA) · 2026.06 – 2026.12
+status: Ongoing
+institution: Commercializations Promotion Agency for R&D Outcomes (COMPA)
+period: 2026.06 – 2026.12
 importance: 2
 category: funded
 ---

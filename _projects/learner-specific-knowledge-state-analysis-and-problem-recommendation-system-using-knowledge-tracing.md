@@ -2,6 +2,9 @@
 layout: page
 title: Learner-specific Knowledge State Analysis and Problem Recommendation System Using Knowledge Tracing
 description: Completed · Onuii · 2024.01 – 2024.06
+status: Completed
+institution: Onuii
+period: 2024.01 – 2024.06
 importance: 8
 category: industry
 ---

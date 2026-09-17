@@ -2,6 +2,9 @@
 layout: page
 title: Software Taxonomy Refinement and Patent-based Technology Capability Evaluation
 description: Completed · Korea Institute of Science and Technology Information (KISTI) · 2024.05 – 2024.11
+status: Completed
+institution: Korea Institute of Science and Technology Information (KISTI)
+period: 2024.05 – 2024.11
 importance: 7
 category: funded
 ---

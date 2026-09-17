@@ -1,7 +1,10 @@
 ---
 layout: page
-title: KEA TechGPT Evaluation
+title: Tech-GPT AI Model Performance Consulting 2025
 description: Completed · Korea Electronics Association (KEA) · 2025.09 – 2025.11
+status: Completed
+institution: Korea Electronics Association (KEA)
+period: 2025.09 – 2025.11
 importance: 5
 category: industry
 ---

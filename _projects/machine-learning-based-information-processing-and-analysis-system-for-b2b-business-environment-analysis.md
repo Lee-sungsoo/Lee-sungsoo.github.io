@@ -2,6 +2,9 @@
 layout: page
 title: Machine Learning-based Information Processing and Analysis System for B2B Business Environment Analysis
 description: Completed · LG Electronics · 2023.07 – 2024.06
+status: Completed
+institution: LG Electronics
+period: 2023.07 – 2024.06
 importance: 9
 category: industry
 ---

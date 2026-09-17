@@ -1,30 +1,25 @@
 {% comment %}
-  One-line project list for the single-page layout, in place of al_folio_core's
-  card grid (_includes/projects.liquid): the title, with the Notion-generated
-  description (status, role, client, period) under it in small print.
+  One-row-per-project list for the single-page home, in place of al_folio_core's
+  card grid (_includes/projects.liquid). Each row shows the title, a status pill
+  (Ongoing / Completed) and, under it, the client, period and role that
+  scripts/notion_sync.py writes into the project front matter. Styles live in
+  _layouts/about.liquid.
 {% endcomment %}
 {% assign sorted_projects = site.projects | sort: 'importance' %}
 <ul class="project-list">
   {% for project in sorted_projects %}
     <li>
-      {{ project.title }}
-      <div class="project-meta">{{ project.description }}</div>
+      <div class="project-title">{{ project.title }}</div>
+      {% if project.status %}
+        <span class="project-status {{ project.status | downcase }}">{{ project.status }}</span>
+      {% endif %}
+      {% assign meta_parts = "" | split: "" %}
+      {% if project.institution %}{% assign meta_parts = meta_parts | push: project.institution %}{% endif %}
+      {% if project.period %}{% assign meta_parts = meta_parts | push: project.period %}{% endif %}
+      {% if project.role %}{% assign meta_parts = meta_parts | push: project.role %}{% endif %}
+      {% if meta_parts.size > 0 %}
+        <div class="project-meta">{{ meta_parts | join: " · " }}</div>
+      {% endif %}
     </li>
   {% endfor %}
 </ul>
-
-<style>
-  .project-list {
-    list-style: none;
-    padding-left: 0;
-  }
-
-  .project-list li {
-    margin-bottom: 0.75rem;
-  }
-
-  .project-meta {
-    font-size: 0.875rem;
-    color: var(--global-text-color-light);
-  }
-</style>

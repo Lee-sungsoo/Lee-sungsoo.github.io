@@ -2,6 +2,9 @@
 layout: page
 title: LLM and AI Agent-based SaaS Platform for Technology Solution Generation and Evaluation
 description: Completed · The Seoul Institute · 2025.10 – 2026.01
+status: Completed
+institution: The Seoul Institute
+period: 2025.10 – 2026.01
 importance: 4
 category: funded
 ---

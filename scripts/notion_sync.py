@@ -327,20 +327,26 @@ def build_bibliography(research_rows: list[dict[str, Any]]) -> tuple[str, int]:
 # -----------------------------------------------------------------------------
 
 
-def project_description(
-    status: str, role: str, institution: str, start: str, end: str
-) -> str:
-    """Builds `Status · Role · institution · YYYY.MM – YYYY.MM`; empty parts are skipped.
+def project_period(status: str, start: str, end: str) -> str:
+    """Builds `YYYY.MM – YYYY.MM`; empty when there is no start date.
 
     An Ongoing project without an end date reads `YYYY.MM – present`.
     """
-    period = ""
-    if start:
-        period = format_year_month(start)
-        if end:
-            period = f"{period} – {format_year_month(end)}"
-        elif status == "Ongoing":
-            period = f"{period} – present"
+    if not start:
+        return ""
+    period = format_year_month(start)
+    if end:
+        return f"{period} – {format_year_month(end)}"
+    if status == "Ongoing":
+        return f"{period} – present"
+    return period
+
+
+def project_description(
+    status: str, role: str, institution: str, start: str, end: str
+) -> str:
+    """Builds `Status · Role · institution · YYYY.MM – YYYY.MM`; empty parts are skipped."""
+    period = project_period(status, start, end)
     return " · ".join(part for part in (status, role, institution, period) if part)
 
 
@@ -371,18 +377,25 @@ def build_projects(
         reverse=True,
     )
     for row in ordered_projects:
+        status = select_of(row, "상태")
+        role = select_of(row, "참여 형태")
+        institution = text_of(row, "기관·발주처")
         start, end = date_of(row, "기간")
         drafts.append(
             {
                 "row": row,
                 "title": text_of(row, "프로젝트명"),
                 "description": project_description(
-                    select_of(row, "상태"),
-                    select_of(row, "참여 형태"),
-                    text_of(row, "기관·발주처"),
-                    start,
-                    end,
+                    status, role, institution, start, end
                 ),
+                # Separate fields so the home page can lay them out (status pill,
+                # meta line) instead of printing the joined description.
+                "fields": {
+                    "status": status,
+                    "role": role,
+                    "institution": institution,
+                    "period": project_period(status, start, end),
+                },
                 "importance": number_of(row, "중요도"),
                 "category": PROJECT_CATEGORIES.get(
                     select_of(row, "분류"), DEFAULT_PROJECT_CATEGORY
@@ -399,11 +412,16 @@ def build_projects(
         ),
     )
     for row in ordered_cowork:
+        year = number_of(row, "연도")
         drafts.append(
             {
                 "row": row,
                 "title": english_title(row, "제목"),
                 "description": cowork_description(row),
+                "fields": {
+                    "institution": text_of(row, "게재처"),
+                    "period": str(int(year)) if year is not None else "",
+                },
                 "importance": None,
                 "category": RESEARCH_PROJECT_CATEGORY,
             }
@@ -418,6 +436,9 @@ def build_projects(
         }
         if draft["description"]:
             front_matter["description"] = draft["description"]
+        for key, value in draft["fields"].items():
+            if value:
+                front_matter[key] = value
         importance = draft["importance"]
         front_matter["importance"] = (
             int(importance) if importance is not None else index

@@ -2,93 +2,274 @@
 layout: default
 ---
 {% comment %}
-  Local override of al_folio_core's _layouts/about.liquid. Only change: the social
-  icons are rendered inside the profile block, right under the photo, instead of at
-  the very bottom of the page.
+  Custom single-page home. It replaces al_folio_core's about layout: a sticky
+  sidebar carries the photo, name, role, affiliation and social links, and the
+  page body (sections written in _pages/about.md) fills the column next to it.
+  Social links are rendered here from _data/socials.yml (instead of the
+  jekyll-socials tag) so each icon can carry its brand color. Everything else
+  uses the theme's CSS variables so dark mode keeps working.
 {% endcomment %}
-<div class="post">
-  <header class="post-header">
-    <h1 class="post-title">
-      {% if site.title == 'blank' %}
-        <span class="font-weight-bold">{{ site.first_name }}</span> {{ site.middle_name }}
-        {{ site.last_name }}
-      {% else %}
-        {{ site.title }}
+{% assign photo = page.profile.image | prepend: 'assets/img/' %}
+{% assign socials = site.data.socials %}
+{% capture sizes %}(min-width: 900px) 230px, 170px{% endcapture %}
+<div class="home">
+  <aside class="home-side">
+    {% include figure.liquid loading="eager" path=photo class="home-photo" sizes=sizes alt=site.title cache_bust=true %}
+    <h1 class="home-name">{{ site.title }}</h1>
+    {% if page.profile.role %}
+      <p class="home-role">{{ page.profile.role }}</p>
+    {% endif %}
+    {% if page.profile.affiliation %}
+      <p class="home-affil">
+        {% for line in page.profile.affiliation %}
+          {{ line }}{% unless forloop.last %}<br>{% endunless %}
+        {% endfor %}
+      </p>
+    {% endif %}
+    <div class="home-social">
+      {% if socials.email %}
+        <a class="home-social-email" href="mailto:{{ socials.email }}" title="Email" aria-label="Email"><i class="fa-solid fa-envelope"></i></a>
       {% endif %}
-    </h1>
-    <p class="desc">{{ page.subtitle }}</p>
-  </header>
-
-  <article>
-    {% if page.profile %}
-      <div class="profile float-{% if page.profile.align == 'left' %}left{% else %}right{% endif %}">
-        {% if page.profile.image %}
-          {% assign profile_image_path = page.profile.image | prepend: 'assets/img/' %}
-          {% if page.profile.image_circular %}
-            {% assign profile_image_class = 'img-fluid z-depth-1 rounded-circle' %}
-          {% else %}
-            {% assign profile_image_class = 'img-fluid z-depth-1
-      rounded' %}
-          {% endif %}
-          {% capture sizes %}(min-width: {{ site.max_width }}) {{ site.max_width | minus: 30 | times: 0.3}}px, (min-width: 576px)
-      30vw, 95vw"{% endcapture %}
-          {%
-            include figure.liquid loading="eager" path=profile_image_path class=profile_image_class sizes=sizes alt=page.profile.image
-            cache_bust=true
-          %}
-        {% endif %}
-        {% if page.profile.more_info %}
-          <div class="more-info">{{ page.profile.more_info }}</div>
-        {% endif %}
-        <!-- Social -->
-        {% if page.social %}
-          <div class="social">
-            <div class="contact-icons">{% social_links %}</div>
-            <style>
-              /* Icons sit in the 30% profile column, so keep them on one line. */
-              .profile .contact-icons {
-                font-size: 2rem;
-              }
-            </style>
-
-            <div class="contact-note">{{ site.contact_note }}</div>
-          </div>
-        {% endif %}
-      </div>
-    {% endif %}
-
-    <div class="clearfix">{{ content }}</div>
-
-    <!-- News -->
-    {% if page.announcements and page.announcements.enabled %}
-      <h2>
-        <a href="{{ '/news/' | relative_url }}" style="color: inherit">news</a>
-      </h2>
-      {% include news.liquid limit=true %}
-    {% endif %}
-
-    <!-- Latest posts -->
-    {% if page.latest_posts and page.latest_posts.enabled %}
-      <h2>
-        <a href="{{ '/blog/' | relative_url }}" style="color: inherit">latest posts</a>
-      </h2>
-      {% include latest_posts.liquid %}
-    {% endif %}
-
-    <!-- Selected papers -->
-    {% if page.selected_papers %}
-      <h2>
-        <a href="{{ '/publications/' | relative_url }}" style="color: inherit">selected publications</a>
-      </h2>
-      {% include selected_papers.liquid %}
-    {% endif %}
-
-    {% if site.newsletter and site.newsletter.enabled and site.footer_fixed %}
-      {% if site.plugins contains 'al_newsletter' %}
-        {% include plugins/al_newsletter_form_center_margin.liquid %}
-      {% else %}
-        {% include newsletter.liquid center=true %}
+      {% if socials.github_username %}
+        <a class="home-social-github" href="https://github.com/{{ socials.github_username }}" title="GitHub" aria-label="GitHub" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-github"></i></a>
       {% endif %}
-    {% endif %}
-  </article>
+      {% if socials.linkedin_username %}
+        <a class="home-social-linkedin" href="https://www.linkedin.com/in/{{ socials.linkedin_username }}" title="LinkedIn" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-linkedin"></i></a>
+      {% endif %}
+      {% if socials.scholar_userid %}
+        <a class="home-social-scholar" href="https://scholar.google.com/citations?user={{ socials.scholar_userid }}" title="Google Scholar" aria-label="Google Scholar" target="_blank" rel="noopener noreferrer"><i class="ai ai-google-scholar"></i></a>
+      {% endif %}
+    </div>
+  </aside>
+  <div class="home-main">
+    {{ content }}
+  </div>
 </div>
+
+<style>
+  .home {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+    padding-top: 0.5rem;
+  }
+
+  /* Sidebar: centered on narrow screens, sticky left column on wide ones. */
+  .home-side {
+    text-align: center;
+  }
+
+  .home-side figure {
+    margin: 0 auto 1.25rem;
+    width: 170px;
+  }
+
+  .home-photo {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+  }
+
+  .home-name {
+    font-size: 1.55rem;
+    font-weight: 600;
+    line-height: 1.2;
+    margin: 0 0 0.35rem;
+    color: var(--global-text-color);
+  }
+
+  .home-role {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--global-text-color);
+  }
+
+  .home-affil {
+    margin: 0.3rem 0 1.1rem;
+    font-size: 0.86rem;
+    line-height: 1.5;
+    color: var(--global-text-color-light);
+  }
+
+  .home-social {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .home-social a {
+    display: inline-flex;
+    font-size: 1.35rem;
+    line-height: 1;
+    text-decoration: none;
+    transition: opacity 0.15s ease;
+  }
+
+  .home-social a:hover {
+    opacity: 0.7;
+    text-decoration: none;
+  }
+
+  /* Brand colors, one per service. */
+  .home-social-email {
+    color: #d93025;
+  }
+
+  .home-social-github {
+    color: #24292f;
+  }
+
+  html[data-theme="dark"] .home-social-github {
+    color: #e6edf3;
+  }
+
+  .home-social-linkedin {
+    color: #0a66c2;
+  }
+
+  .home-social-scholar {
+    color: #4285f4;
+  }
+
+  @media (min-width: 900px) {
+    .home {
+      grid-template-columns: 230px minmax(0, 1fr);
+      gap: 4.5rem;
+      align-items: start;
+    }
+
+    .home-side {
+      text-align: left;
+      position: sticky;
+      top: 5.5rem;
+    }
+
+    .home-side figure {
+      margin: 0 0 1.25rem;
+      width: 100%;
+    }
+
+    .home-social {
+      justify-content: flex-start;
+    }
+  }
+
+  /* Main column: one section per block, a thin rule under each heading. */
+  .home-main section + section {
+    margin-top: 3rem;
+  }
+
+  .home-main h2 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 1.1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--global-divider-color);
+  }
+
+  /* Publications: jekyll-scholar output through al-folio's bib template. The
+     year headings become small muted labels instead of right-aligned rules. */
+  .home-main .publications {
+    margin-top: 0;
+  }
+
+  .home-main .publications h2.bibliography {
+    text-align: left;
+    border: 0;
+    padding: 0;
+    margin: 1.5rem 0 0.6rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--global-text-color-light);
+  }
+
+  .home-main .publications h2.bibliography:first-child {
+    margin-top: 0;
+  }
+
+  .home-main .publications ol.bibliography li {
+    margin-bottom: 1.4rem;
+  }
+
+  .home-main .publications ol.bibliography li .abbr abbr {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .home-main .publications ol.bibliography li .title {
+    font-weight: 600;
+  }
+
+  .home-main .publications ol.bibliography li .author,
+  .home-main .publications ol.bibliography li .periodical {
+    font-size: 0.92rem;
+  }
+
+  /* Projects: title left, status pill right, client · period · role beneath. */
+  .project-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .project-list li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.2rem 1rem;
+    align-items: start;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid var(--global-divider-color);
+  }
+
+  .project-list li:last-child {
+    border-bottom: 0;
+  }
+
+  .project-title {
+    font-weight: 500;
+  }
+
+  .project-status {
+    margin-top: 0.15rem;
+    white-space: nowrap;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid var(--global-divider-color);
+    color: var(--global-text-color-light);
+  }
+
+  .project-status.ongoing {
+    color: var(--global-theme-color);
+    border-color: var(--global-theme-color);
+  }
+
+  .project-meta {
+    grid-column: 1 / -1;
+    font-size: 0.85rem;
+    color: var(--global-text-color-light);
+  }
+  /* The navbar (see _includes/header.liquid) holds only the theme toggle:
+     keep it at the right edge at every width. One class more specific than
+     the theme's mobile rule, which resets the list to full width. */
+  .navbar .container .navbar-menu-list {
+    width: auto;
+    margin-left: auto;
+  }
+
+  /* Narrow screens: venue badges shrink to their text. The theme's `w-100`
+     sets width inside a cascade layer with !important, so cap max-width instead. */
+  @media (max-width: 575.98px) {
+    .home-main .publications ol.bibliography li .abbr abbr.w-100 {
+      max-width: max-content;
+    }
+  }
+</style>

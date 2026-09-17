@@ -2,6 +2,9 @@
 layout: page
 title: Prescriptive Technology Intelligence Methodology for AI + X
 description: Ongoing · National Research Foundation of Korea (NRF) · 2026.09 – present
+status: Ongoing
+institution: National Research Foundation of Korea (NRF)
+period: 2026.09 – present
 importance: 1
 category: funded
 ---

@@ -56,6 +56,9 @@ GENERATED_MARKER = (
 )
 
 # Publication type (유형) -> (BibTeX entry type, field holding the venue).
+# Rows in these states are not published papers yet and stay out of papers.bib.
+EXCLUDED_STATUSES = frozenset({"Working", "Under Review"})
+
 PUBLICATION_TYPES = {
     "Journal": ("article", "journal"),
     "International Conference": ("inproceedings", "booktitle"),
@@ -275,7 +278,7 @@ def build_bibliography(research_rows: list[dict[str, Any]]) -> tuple[str, int]:
     entries: list[tuple[int, str, dict[str, Any]]] = []
     for row in research_rows:
         kind = select_of(row, "유형")
-        if kind not in PUBLICATION_TYPES or select_of(row, "상태") == "Working":
+        if kind not in PUBLICATION_TYPES or select_of(row, "상태") in EXCLUDED_STATUSES:
             continue
         title = english_title(row, "제목")
         year = number_of(row, "연도")

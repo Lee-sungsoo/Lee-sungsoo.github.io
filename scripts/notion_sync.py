@@ -283,7 +283,11 @@ def build_bibliography(research_rows: list[dict[str, Any]]) -> tuple[str, int]:
         kind = select_of(row, "유형")
         if kind not in PUBLICATION_TYPES or select_of(row, "상태") in EXCLUDED_STATUSES:
             continue
-        title = english_title(row, "제목")
+        # Domestic conference talks keep their Korean title; the rest prefer Title (EN).
+        if kind == "Domestic Conference":
+            title = text_of(row, "제목")
+        else:
+            title = english_title(row, "제목")
         year = number_of(row, "연도")
         entries.append((-int(year) if year is not None else 1, title, row))
     entries.sort(key=lambda item: (item[0], item[1]))

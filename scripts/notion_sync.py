@@ -327,16 +327,19 @@ def build_bibliography(research_rows: list[dict[str, Any]]) -> tuple[str, int]:
 # -----------------------------------------------------------------------------
 
 
-def project_description(institution: str, start: str, end: str) -> str:
-    """Builds `institution · YYYY.MM – YYYY.MM`; empty when there is no institution."""
-    if not institution:
-        return ""
-    if not start:
-        return institution
-    period = format_year_month(start)
-    if end:
-        period = f"{period} – {format_year_month(end)}"
-    return f"{institution} · {period}"
+def project_description(status: str, institution: str, start: str, end: str) -> str:
+    """Builds `Status · institution · YYYY.MM – YYYY.MM`; empty parts are skipped.
+
+    An Ongoing project without an end date reads `YYYY.MM – present`.
+    """
+    period = ""
+    if start:
+        period = format_year_month(start)
+        if end:
+            period = f"{period} – {format_year_month(end)}"
+        elif status == "Ongoing":
+            period = f"{period} – present"
+    return " · ".join(part for part in (status, institution, period) if part)
 
 
 def cowork_description(row: dict[str, Any]) -> str:
@@ -356,22 +359,23 @@ def build_projects(
     """
     drafts: list[dict[str, Any]] = []
 
+    # Ongoing projects first, then the most recently started.
     ordered_projects = sorted(
         project_rows,
         key=lambda row: (
-            number_of(row, "중요도") is None,
-            number_of(row, "중요도") or 0,
-            english_title(row, "프로젝트명"),
+            select_of(row, "상태") == "Ongoing",
+            date_of(row, "기간")[0] or "",
         ),
+        reverse=True,
     )
     for row in ordered_projects:
         start, end = date_of(row, "기간")
         drafts.append(
             {
                 "row": row,
-                "title": english_title(row, "프로젝트명"),
+                "title": text_of(row, "프로젝트명"),
                 "description": project_description(
-                    text_of(row, "기관·발주처"), start, end
+                    select_of(row, "상태"), text_of(row, "기관·발주처"), start, end
                 ),
                 "importance": number_of(row, "중요도"),
                 "category": PROJECT_CATEGORIES.get(

@@ -345,12 +345,10 @@ def project_period(status: str, start: str, end: str) -> str:
     return period
 
 
-def project_description(
-    status: str, role: str, institution: str, start: str, end: str
-) -> str:
-    """Builds `Status · Role · institution · YYYY.MM – YYYY.MM`; empty parts are skipped."""
+def project_description(status: str, institution: str, start: str, end: str) -> str:
+    """Builds `Status · institution · YYYY.MM – YYYY.MM`; empty parts are skipped."""
     period = project_period(status, start, end)
-    return " · ".join(part for part in (status, role, institution, period) if part)
+    return " · ".join(part for part in (status, institution, period) if part)
 
 
 def cowork_description(row: dict[str, Any]) -> str:
@@ -381,21 +379,17 @@ def build_projects(
     )
     for row in ordered_projects:
         status = select_of(row, "상태")
-        role = select_of(row, "참여 형태")
         institution = text_of(row, "기관·발주처")
         start, end = date_of(row, "기간")
         drafts.append(
             {
                 "row": row,
                 "title": text_of(row, "프로젝트명"),
-                "description": project_description(
-                    status, role, institution, start, end
-                ),
+                "description": project_description(status, institution, start, end),
                 # Separate fields so the home page can lay them out (status pill,
                 # meta line) instead of printing the joined description.
                 "fields": {
                     "status": status,
-                    "role": role,
                     "institution": institution,
                     "period": project_period(status, start, end),
                 },

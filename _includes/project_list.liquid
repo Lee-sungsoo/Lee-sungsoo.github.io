@@ -1,7 +1,7 @@
 {% comment %}
   One-row-per-project list for the single-page home, in place of al_folio_core's
   card grid (_includes/projects.liquid). Each row shows the title, a status pill
-  (Ongoing / Completed) and, under it, the client, period and role that
+  (Ongoing / Completed) and, under it, the client and period that
   scripts/notion_sync.py writes into the project front matter. Styles live in
   _layouts/about.liquid.
 {% endcomment %}
@@ -16,7 +16,6 @@
       {% assign meta_parts = "" | split: "" %}
       {% if project.institution %}{% assign meta_parts = meta_parts | push: project.institution %}{% endif %}
       {% if project.period %}{% assign meta_parts = meta_parts | push: project.period %}{% endif %}
-      {% if project.role %}{% assign meta_parts = meta_parts | push: project.role %}{% endif %}
       {% if meta_parts.size > 0 %}
         <div class="project-meta">{{ meta_parts | join: " · " }}</div>
       {% endif %}

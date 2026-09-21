@@ -194,7 +194,7 @@ collections:
       layout: post
     output: true
   projects:
-    output: false # listed inline on the single page, so no per-project pages
+    output: false # listed inline on the projects page, so no per-project pages
   teachings:
     output: true
 

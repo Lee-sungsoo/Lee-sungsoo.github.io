@@ -1,0 +1,13 @@
+# Sidebar profile, shared by every page through _layouts/about.liquid. It used to
+# live in the about.md front matter, but the sidebar now renders on all four
+# tabs, so the data has to sit outside any single page.
+image: prof_pic.jpg
+role: Ph.D. Student
+affiliation:
+  - Department of Data Science
+  - Seoul National University of Science and Technology
+interests:
+  - Technology Intelligence
+  - R&D Intelligence
+  - Recommender Systems
+  - LLM Agents

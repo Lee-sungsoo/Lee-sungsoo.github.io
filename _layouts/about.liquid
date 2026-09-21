@@ -2,32 +2,35 @@
 layout: default
 ---
 {% comment %}
-  Custom single-page home. It replaces al_folio_core's about layout: a sticky
-  sidebar carries the photo, name, role, affiliation and social links, and the
-  page body (sections written in _pages/about.md) fills the column next to it.
-  Social links are rendered here from _data/socials.yml (instead of the
-  jekyll-socials tag) so each icon can carry its brand color. Everything else
-  uses the theme's CSS variables so dark mode keeps working.
+  Shared shell for every page of the site (home, publications, projects, cv),
+  replacing al_folio_core's about layout: a sticky sidebar carries the photo,
+  name, role, affiliation and social links, and the page body fills the column
+  next to it. The sidebar is written once here and its data comes from
+  _data/profile.yml, so no page repeats it. Social links are rendered from
+  _data/socials.yml (instead of the jekyll-socials tag) so each icon can carry
+  its brand color. Everything else uses the theme's CSS variables so dark mode
+  keeps working.
 {% endcomment %}
-{% assign photo = page.profile.image | prepend: 'assets/img/' %}
+{% assign profile = site.data.profile %}
+{% assign photo = profile.image | prepend: 'assets/img/' %}
 {% assign socials = site.data.socials %}
 {% capture sizes %}(min-width: 900px) 230px, 170px{% endcapture %}
 <div class="home">
   <aside class="home-side">
     {% include figure.liquid loading="eager" path=photo class="home-photo" sizes=sizes alt=site.title cache_bust=true %}
     <h1 class="home-name">{{ site.title }}</h1>
-    {% if page.profile.role %}
-      <p class="home-role">{{ page.profile.role }}</p>
+    {% if profile.role %}
+      <p class="home-role">{{ profile.role }}</p>
     {% endif %}
-    {% if page.profile.affiliation %}
+    {% if profile.affiliation %}
       <p class="home-affil">
-        {% for line in page.profile.affiliation %}
+        {% for line in profile.affiliation %}
           {{ line }}{% unless forloop.last %}<br>{% endunless %}
         {% endfor %}
       </p>
     {% endif %}
-    {% if page.profile.interests %}
-      <p class="home-interests">{% for item in page.profile.interests %}<span>{{ item }}</span>{% endfor %}</p>
+    {% if profile.interests %}
+      <p class="home-interests">{% for item in profile.interests %}<span>{{ item }}</span>{% endfor %}</p>
     {% endif %}
     <div class="home-social">
       {% if socials.email %}
@@ -215,6 +218,10 @@ layout: default
     line-height: 1.7;
   }
 
+  .home-main #about p + p {
+    margin-top: 1rem;
+  }
+
   /* Education, honors, publications, patents and projects share one row design:
      title on the left, a small pill or date on the right, muted detail lines
      beneath, rules between rows. */
@@ -312,11 +319,48 @@ layout: default
     text-decoration-color: var(--global-theme-color);
   }
 
-  /* The navbar (see _includes/header.liquid) holds only the theme toggle:
-     keep it at the right edge at every width. One class more specific than
-     the theme's mobile rule, which resets the list to full width. */
+  /* CV tab: the embedded PDF fills the column, tall enough to read a page
+     without scrolling the viewer itself. */
+  .cv-embed {
+    display: block;
+    width: 100%;
+    height: min(80vh, 900px);
+    border: 1px solid var(--global-divider-color);
+    border-radius: 6px;
+  }
+
+  .cv-download {
+    margin-left: 0.6rem;
+    vertical-align: middle;
+    font-size: 0.75rem;
+  }
+
+  /* The navbar (see _includes/header.liquid) holds the four page links and the
+     theme toggle. The theme stacks the list into a column below 576px and its
+     hamburger cannot be revived from here (the `.collapse` rule that hides the
+     menu is `!important` inside a cascade layer), so keep the links on one
+     right-aligned row that wraps instead. These rules are unlayered, which is
+     what lets them win over the theme's layered defaults. */
   .navbar .container .navbar-menu-list {
     width: auto;
     margin-left: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0 1.1rem;
+  }
+
+  .navbar .container .navbar-menu-list .nav-link {
+    padding: 0.5rem 0;
+  }
+
+  /* The theme drops the navbar's side padding on small screens, which leaves the
+     links flush against the edge now that there is more than one of them. */
+  @media (max-width: 575.98px) {
+    .navbar .container {
+      padding-left: 15px;
+      padding-right: 15px;
+    }
   }
 </style>

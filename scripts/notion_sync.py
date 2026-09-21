@@ -10,9 +10,9 @@ REST API and regenerates five site artifacts:
 
   * ``_bibliography/papers.bib``  -- publications rendered by jekyll-scholar
   * ``_projects/*.md``            -- project cards (generated files only)
-  * ``_data/education.yml``       -- education list for the home page
-  * ``_data/honors.yml``          -- honors and awards list for the home page
-  * ``_data/patents.yml``         -- patent list for the home page
+  * ``_data/education.yml``       -- education list for the home tab
+  * ``_data/honors.yml``          -- honors and their amounts, for the home tab
+  * ``_data/patents.yml``         -- patent list for the publications tab
 
 Notion is read-only here. Only rows with the ``공개`` checkbox set are exported,
 unless ``--all`` is passed. Output is deterministic: entries are sorted and no
@@ -510,6 +510,7 @@ def build_honors(cv_rows: list[dict[str, Any]]) -> list[dict[str, str]]:
         fields = {
             "title": text_of(row, "내용"),
             "organization": text_of(row, "기관"),
+            "amount": text_of(row, "규모"),
             "date": format_year_month(date_of(row, "기간")[0]),
         }
         honors.append({key: value for key, value in fields.items() if value})

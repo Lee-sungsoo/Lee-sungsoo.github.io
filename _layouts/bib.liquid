@@ -66,10 +66,14 @@
     {%- if venue != "" and entry.year -%}{{ ", " }}{%- endif -%}
     {%- if entry.year -%}{{ entry.year }}{%- endif -%}
     {%- if entry.doi -%}
-      {{ " · " }}<a href="https://doi.org/{{ entry.doi }}" target="_blank" rel="noopener noreferrer">DOI</a>
+      {{ " · DOI: " }}{{ entry.doi }}
     {%- endif -%}
-    {%- if entry.html -%}
-      {{ " · " }}<a href="{{ entry.html }}" target="_blank" rel="noopener noreferrer">Link</a>
+    {%- assign link = entry.html -%}
+    {%- if link == nil or link == "" -%}
+      {%- if entry.doi -%}{%- capture link -%}https://doi.org/{{ entry.doi }}{%- endcapture -%}{%- endif -%}
+    {%- endif -%}
+    {%- if link and link != "" -%}
+      {{ " · " }}<a href="{{ link }}" target="_blank" rel="noopener noreferrer">Link</a>
     {%- endif -%}
   </div>
 </div>

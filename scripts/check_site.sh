@@ -4,10 +4,11 @@
 # Checks the sources (exactly four `nav: true` pages) and the build output: every
 # tab carries the one shared sidebar (photo, name, role, affiliation, interests,
 # colored social links) and the same four-link navbar with the current tab
-# marked; Home holds About, Education and Honors; Publications holds the
-# bibliography and the patents; Projects holds the project list; CV embeds
-# assets/pdf/cv.pdf when the file is there and says so when it is not. Education,
-# honors and patents render only when _data has rows for them.
+# marked; Home holds About, Education and Honors; Research holds the
+# bibliography, the presentations and the patents, in that order; Projects holds
+# the project list; CV embeds assets/pdf/cv.pdf when the file is there and says
+# so when it is not. Education, honors and patents render only when _data has
+# rows for them.
 # Run `bundle exec jekyll build` first: the output checks read _site/.
 
 set -euo pipefail
@@ -19,7 +20,7 @@ index="$site_dir/index.html"
 status=0
 
 # tab id : url : navbar label, in navbar order.
-tabs="home:/:Home publications:/publications/:Publications projects:/projects/:Projects cv:/cv/:CV"
+tabs="home:/:Home research:/research/:Research projects:/projects/:Projects cv:/cv/:CV"
 
 fail() {
   echo "FAIL $1" >&2
@@ -47,8 +48,8 @@ for file in "$pages_dir"/*.md; do
   fi
 done
 nav_pages="$(printf '%s\n' $nav_pages | sort | tr '\n' ' ' | sed 's/ *$//')"
-if [ "$nav_pages" != "about.md cv.md projects.md publications.md" ]; then
-  fail "the nav: true pages are '$nav_pages', expected 'about.md cv.md projects.md publications.md'"
+if [ "$nav_pages" != "about.md cv.md projects.md research.md" ]; then
+  fail "the nav: true pages are '$nav_pages', expected 'about.md cv.md projects.md research.md'"
 fi
 
 # --- every tab: the shared shell --------------------------------------------
@@ -91,6 +92,8 @@ for tab in $tabs; do
     other_label="${other_rest#*:}"
     printf '%s' "$nav" | grep -q "href=\"$other_url\">$other_label" || fail "the $id navbar has no $other_label link"
   done
+  items=$(printf '%s' "$nav" | grep -o '<li class="nav-item' | wc -l | tr -d ' ')
+  [ "$items" -eq 4 ] || fail "the $id navbar carries $items page links, expected exactly 4"
   actives=$(printf '%s' "$nav" | grep -c '<li class="nav-item active">' || true)
   if [ "$actives" -ne 1 ]; then
     fail "the $id navbar marks $actives links active, expected exactly 1"
@@ -154,24 +157,45 @@ fi
 
 # The lists that moved out must not also be left behind here: a half-finished
 # split renders them twice, once on Home and once on their own tab.
-for section in publications patents projects; do
+for section in publications patents presentations projects; do
   if grep -q "<section id=\"$section\">" "$index"; then
     fail "the home page still carries <section id=\"$section\">, which belongs on its own tab"
   fi
 done
 
-# --- publications: bibliography and patents ---------------------------------
+# --- research: bibliography, presentations and patents ---------------------
 
-publications="$site_dir/publications/index.html"
-if [ -f "$publications" ]; then
-  grep -q 'class="bibliography"' "$publications" || fail "the bibliography is missing from the publications page"
-  grep -q 'class="pub-row"' "$publications" || fail "the publication rows are missing from the publications page"
-  grep -q 'class="pub-type"' "$publications" || fail "the publication rows carry no type pill"
-  if grep -q '<h2 class="bibliography">' "$publications"; then
+research="$site_dir/research/index.html"
+if [ -f "$research" ]; then
+  grep -q 'class="bibliography"' "$research" || fail "the bibliography is missing from the research page"
+  grep -q 'class="pub-row"' "$research" || fail "the publication rows are missing from the research page"
+  grep -q 'class="pub-type"' "$research" || fail "the publication rows carry no type pill"
+  if grep -q '<h2 class="bibliography">' "$research"; then
     fail "the bibliography still renders year headings; scholar.group_by should be none"
   fi
-  check_data_section patents "$publications"
+  grep -q '<section id="presentations">' "$research" || fail "no <section id=\"presentations\"> on the research page"
+  sed -n '/<section id="presentations">/,/<\/section>/p' "$research" | grep -q 'class="pub-row"' || fail "the presentation rows are missing from the research page"
+  check_data_section patents "$research"
+
+  # Publications, then presentations, then patents.
+  publications_at="$(offset_of "$research" '<section id="publications">' || true)"
+  presentations_at="$(offset_of "$research" '<section id="presentations">' || true)"
+  patents_at="$(offset_of "$research" '<section id="patents">' || true)"
+  if [ -n "$publications_at" ] && [ -n "$presentations_at" ] && [ "$publications_at" -gt "$presentations_at" ]; then
+    fail "the presentations section comes before the publications section"
+  fi
+  if [ -n "$presentations_at" ] && [ -n "$patents_at" ] && [ "$presentations_at" -gt "$patents_at" ]; then
+    fail "the patents section comes before the presentations section"
+  fi
 fi
+
+# The old Publications and Presentations tabs are folded into Research; their
+# pages must not linger in the build.
+for old_tab in publications presentations; do
+  if [ -e "$site_dir/$old_tab" ]; then
+    fail "_site/$old_tab/ still exists; that tab is now part of Research"
+  fi
+done
 
 # --- projects ---------------------------------------------------------------
 
@@ -182,7 +206,7 @@ if [ -f "$projects" ]; then
 fi
 
 # Each list heading keeps its count badge.
-for page in "$publications" "$projects"; do
+for page in "$research" "$projects"; do
   [ -f "$page" ] || continue
   counts=$(grep -o 'class="home-count">[0-9]*</span>' "$page" | wc -l | tr -d ' ')
   [ "$counts" -ge 1 ] || fail "expected a count next to the headings of ${page#$repo_root/}, found none"
@@ -204,7 +228,7 @@ if [ -f "$cv" ]; then
 fi
 
 if [ "$status" -eq 0 ]; then
-  echo "check_site: four tabs (home, publications, projects, cv), one sidebar and one navbar on each"
+  echo "check_site: four tabs (home, research, projects, cv), one sidebar and one navbar on each"
 fi
 
 exit "$status"

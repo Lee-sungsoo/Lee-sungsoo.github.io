@@ -2,7 +2,7 @@
 layout: default
 ---
 {% comment %}
-  Shared shell for every page of the site (home, publications, projects, cv),
+  Shared shell for every page of the site (home, research, projects, cv),
   replacing al_folio_core's about layout: a sticky sidebar carries the photo,
   name, role, affiliation and social links, and the page body fills the column
   next to it. The sidebar is written once here and its data comes from
@@ -222,13 +222,14 @@ layout: default
     margin-top: 1rem;
   }
 
-  /* Education, honors, publications, patents and projects share one row design:
-     title on the left, a small pill or date on the right, muted detail lines
-     beneath, rules between rows. */
+  /* Education, honors, publications, patents, presentations and projects share
+     one row design: title on the left, a small pill or date on the right, muted
+     detail lines beneath, rules between rows. */
   .home-main .publications ol.bibliography,
   .education-list,
   .honors-list,
   .patent-list,
+  .presentation-list,
   .project-list {
     list-style: none;
     margin: 0;
@@ -254,6 +255,7 @@ layout: default
   .education-list li:last-child,
   .honors-list li:last-child,
   .patent-list li:last-child,
+  .presentation-list li:last-child,
   .project-list li:last-child {
     border-bottom: 0;
   }

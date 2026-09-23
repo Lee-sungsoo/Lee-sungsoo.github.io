@@ -6,13 +6,14 @@
 """Syncs Notion databases into the al-folio data files of this site.
 
 Reads four Notion databases (Research, Projects, CV Entries, Patents) through the
-REST API and regenerates five site artifacts:
+REST API and regenerates six site artifacts:
 
   * ``_bibliography/papers.bib``  -- publications rendered by jekyll-scholar
   * ``_projects/*.md``            -- project cards (generated files only)
   * ``_data/education.yml``       -- education list for the home tab
   * ``_data/honors.yml``          -- honors and their amounts, for the home tab
-  * ``_data/patents.yml``         -- patent list for the publications tab
+  * ``_data/patents.yml``         -- patent list for the research tab
+  * ``_data/presentations.yml``   -- talks and posters for the research tab
 
 Notion is read-only here. Only rows with the ``공개`` checkbox set are exported,
 unless ``--all`` is passed. Output is deterministic: entries are sorted and no
@@ -52,6 +53,7 @@ PROJECTS_DIR = REPO_ROOT / "_projects"
 EDUCATION_PATH = REPO_ROOT / "_data" / "education.yml"
 HONORS_PATH = REPO_ROOT / "_data" / "honors.yml"
 PATENTS_PATH = REPO_ROOT / "_data" / "patents.yml"
+PRESENTATIONS_PATH = REPO_ROOT / "_data" / "presentations.yml"
 
 # Marks files this script owns, so a rerun can clear them without touching
 # anything a human added to _projects/.
@@ -67,7 +69,6 @@ EXCLUDED_STATUSES = frozenset({"Working", "Under Review"})
 PUBLICATION_TYPES = {
     "Journal": ("article", "journal", "Journal"),
     "International Conference": ("inproceedings", "booktitle", "Intl. Conf."),
-    "Domestic Conference": ("inproceedings", "booktitle", "Domestic Conf."),
     "Workshop": ("inproceedings", "booktitle", "Workshop"),
     "Preprint": ("misc", None, "Preprint"),
 }
@@ -286,18 +287,21 @@ def format_authors(authors: str) -> str:
     return " and ".join(names)
 
 
+def is_publication(row: dict[str, Any]) -> bool:
+    """Returns whether a Research row is a published paper that goes into papers.bib."""
+    return (
+        select_of(row, "유형") in PUBLICATION_TYPES
+        and select_of(row, "상태") not in EXCLUDED_STATUSES
+    )
+
+
 def build_bibliography(research_rows: list[dict[str, Any]]) -> tuple[str, int]:
     """Renders the publication rows as a BibTeX file body."""
     entries: list[tuple[int, str, dict[str, Any]]] = []
     for row in research_rows:
-        kind = select_of(row, "유형")
-        if kind not in PUBLICATION_TYPES or select_of(row, "상태") in EXCLUDED_STATUSES:
+        if not is_publication(row):
             continue
-        # Domestic conference talks keep their Korean title; the rest prefer Title (EN).
-        if kind == "Domestic Conference":
-            title = text_of(row, "제목")
-        else:
-            title = english_title(row, "제목")
+        title = english_title(row, "제목")
         year = number_of(row, "연도")
         entries.append((-int(year) if year is not None else 1, title, row))
     entries.sort(key=lambda item: (item[0], item[1]))
@@ -368,7 +372,9 @@ def build_projects(
     """Renders project cards as (filename, content) pairs.
 
     Sources are the Projects database and the Co-work rows of the Research
-    database. Project bodies stay empty; only the front matter carries data.
+    database. Co-work rows that are published papers are left out, since the
+    research tab already lists them. Project bodies stay empty; only the
+    front matter carries data.
     """
     drafts: list[dict[str, Any]] = []
 
@@ -404,7 +410,11 @@ def build_projects(
             }
         )
 
-    cowork_rows = [row for row in research_rows if select_of(row, "참여") == "Co-work"]
+    cowork_rows = [
+        row
+        for row in research_rows
+        if select_of(row, "참여") == "Co-work" and not is_publication(row)
+    ]
     ordered_cowork = sorted(
         cowork_rows,
         key=lambda row: (
@@ -552,6 +562,42 @@ def build_patents(patent_rows: list[dict[str, Any]]) -> list[dict[str, str]]:
 
 
 # -----------------------------------------------------------------------------
+# _data/presentations.yml
+# -----------------------------------------------------------------------------
+
+
+def build_presentations(research_rows: list[dict[str, Any]]) -> list[dict[str, str]]:
+    """Builds the presentation list rendered by _includes/presentation_list.liquid.
+
+    One mapping per Research row with a ``발표 행사``, most recent first; empty
+    fields are left out. The date is ``발표일`` as YYYY.MM.DD, else the year.
+    """
+    talks: list[tuple[str, str, dict[str, Any]]] = []
+    for row in research_rows:
+        if not text_of(row, "발표 행사"):
+            continue
+        title = text_of(row, "발표 제목") or text_of(row, "제목")
+        day = date_of(row, "발표일")[0]
+        year = number_of(row, "연도")
+        when = day or (str(int(year)) if year is not None else "")
+        talks.append((when, title, row))
+    talks.sort(key=lambda item: (item[0], item[1]), reverse=True)
+
+    presentations: list[dict[str, str]] = []
+    for when, title, row in talks:
+        fields = {
+            "title": title,
+            "authors": text_of(row, "저자"),
+            "event": text_of(row, "발표 행사"),
+            "location": text_of(row, "발표 장소"),
+            "date": when.replace("-", "."),
+            "type": select_of(row, "발표"),
+        }
+        presentations.append({key: value for key, value in fields.items() if value})
+    return presentations
+
+
+# -----------------------------------------------------------------------------
 # Sync and self-check
 # -----------------------------------------------------------------------------
 
@@ -587,10 +633,14 @@ def sync(include_private: bool) -> dict[str, int]:
     patent_list = build_patents(patents)
     PATENTS_PATH.write_text(dump_yaml(patent_list), encoding="utf-8")
 
+    presentations = build_presentations(research)
+    PRESENTATIONS_PATH.write_text(dump_yaml(presentations), encoding="utf-8")
+
     return {
         "publications": bib_count,
         "projects": len(project_files),
         "patents": len(patent_list),
+        "presentations": len(presentations),
         "education": len(education),
         "honors": len(honors),
     }
@@ -640,6 +690,29 @@ def check() -> list[str]:
             else:
                 print(f"  patents.yml: {len(patents)} patents")
 
+    if not PRESENTATIONS_PATH.exists():
+        problems.append(f"missing {PRESENTATIONS_PATH.relative_to(REPO_ROOT)}")
+    else:
+        try:
+            presentations = yaml.safe_load(
+                PRESENTATIONS_PATH.read_text(encoding="utf-8")
+            )
+        except yaml.YAMLError as error:
+            problems.append(f"presentations.yml does not parse: {error}")
+        else:
+            if not isinstance(presentations, list):
+                problems.append("presentations.yml is not a list")
+            elif any(
+                field not in talk
+                for talk in presentations
+                for field in ("title", "event")
+            ):
+                problems.append(
+                    "presentations.yml has an entry without a title or event"
+                )
+            else:
+                print(f"  presentations.yml: {len(presentations)} presentations")
+
     generated = sorted(
         path
         for path in PROJECTS_DIR.glob("*.md")
@@ -683,6 +756,7 @@ def main() -> int:
     print(
         f"synced {scope}: {counts['publications']} publications, "
         f"{counts['projects']} projects, {counts['patents']} patents, "
+        f"{counts['presentations']} presentations, "
         f"{counts['education']} education, {counts['honors']} honors"
     )
 

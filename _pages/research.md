@@ -1,7 +1,7 @@
 ---
 layout: about
-title: Publications
-permalink: /publications/
+title: Research
+permalink: /research/
 nav: true
 nav_order: 2
 ---
@@ -11,6 +11,11 @@ nav_order: 2
   <div class="publications">
     {% bibliography %}
   </div>
+</section>
+
+<section id="presentations">
+  <h2>Presentations <span class="home-count">{{ site.data.presentations | size }}</span></h2>
+  {% include presentation_list.liquid %}
 </section>
 
 {% if site.data.patents and site.data.patents != empty %}

@@ -1,8 +1,8 @@
 ---
 layout: page
 title: Tech-GPT AI Model Performance Consulting 2026
-description: Ongoing · Korea Electronics Association (KEA) · 2026.03 – 2026.10
-status: Ongoing
+description: Completed · Korea Electronics Association (KEA) · 2026.03 – 2026.10
+status: Completed
 institution: Korea Electronics Association (KEA)
 period: 2026.03 – 2026.10
 importance: 3
